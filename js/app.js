@@ -111,30 +111,55 @@ if (!isTouch) {
 }
 
 /* ================= TAŞ KATALOĞU ================= */
-const linesEl = $('#lines'), famsEl = $('#fams'), swEl = $('#swatches');
-const sio = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); sio.unobserve(e.target); } }), { threshold: .05 });
-function renderLines() {
-  linesEl.innerHTML = Object.entries(LINES).map(([k, l]) => {
-    const n = STONES.filter(s => s.line === k).length;
-    return `<button class="ser ${k === state.line ? 'is-on' : ''}" role="tab" aria-selected="${k === state.line}" data-line="${k}"><b>${l.name}</b><small>${n} renk</small></button>`;
+const linesEl = $('#lines'), famsEl = $('#fams'), swEl = $('#swatches'), pal = $('#pal');
+const hasSahne = s => s.imgs.some(x => x.cat === 'sahne');
+const COVER = { m: 'm-fortuna', b: 'b-calacatta-oro', p: 'p-magellano' };
+function renderSeries() {
+  $('#series').innerHTML = Object.entries(LINES).map(([k, l], i) => {
+    const list = STONES.filter(s => s.line === k);
+    return `<button class="serc reveal" data-open-line="${k}" style="transition-delay:${i * 90}ms">
+      <span class="serc__img"><img src="assets/cat/sahne/${COVER[k]}-t.webp" alt="${esc(l.name)}" loading="lazy" decoding="async"></span>
+      <span class="serc__txt"><small>${list.length} renk</small><b>${esc(l.name)}</b>
+        <span class="serc__dots">${list.slice(0, 5).map(s => `<i style="background-image:url(${s.sw})"></i>`).join('')}</span></span>
+      <span class="serc__go" aria-hidden="true">→</span>
+    </button>`;
   }).join('');
-  $('#lineDesc').textContent = LINES[state.line].desc;
+  $$('.serc').forEach(el => io.observe(el));
+}
+$('#series').addEventListener('click', e => { const b = e.target.closest('[data-open-line]'); if (b) openPal(b.dataset.openLine); });
+function openPal(line) {
+  state.line = line; state.fam = null;
+  renderLines(); renderSwatches();
+  if (pal.hidden) { pal.hidden = false; document.body.classList.add('pal-open'); lockScroll(true); history.pushState({ pal: 1 }, ''); }
+  $('#palBody').scrollTop = 0;
+}
+function closePal(fromPop) {
+  if (pal.hidden) return;
+  pal.hidden = true; document.body.classList.remove('pal-open');
+  if (viewer.hidden) lockScroll(false);
+  if (!fromPop && history.state && history.state.pal) history.back();
+}
+$$('[data-pclose]').forEach(b => b.addEventListener('click', () => closePal()));
+function renderLines() {
+  const L = LINES[state.line];
+  $('#palTitle').textContent = L.name;
+  $('#palSub').textContent = `${STONES.filter(s => s.line === state.line).length} renk`;
+  linesEl.innerHTML = Object.entries(LINES).map(([k, l]) =>
+    `<button class="seg ${k === state.line ? 'is-on' : ''}" role="tab" aria-selected="${k === state.line}" data-line="${k}">${l.short === 'Kuvars' ? 'Maestro' : l.short}</button>`).join('');
   const have = new Set(STONES.filter(s => s.line === state.line).map(s => s.fam));
   famsEl.innerHTML = `<button class="fam ${!state.fam ? 'is-on' : ''}" data-fam="">Tümü</button>` +
     FAMS.filter(f => have.has(f.id)).map(f => `<button class="fam ${state.fam === f.id ? 'is-on' : ''}" data-fam="${f.id}"><i style="background:${f.dot}"></i>${f.name}</button>`).join('');
 }
 function renderSwatches() {
-  const hasSahne = s => s.imgs.some(x => x.cat === 'sahne');
   const list = STONES.filter(s => s.line === state.line && (!state.fam || s.fam === state.fam))
     .map((s, i) => [s, i]).sort((a, b) => (hasSahne(b[0]) - hasSahne(a[0])) || a[1] - b[1]).map(x => x[0]);
-  swEl.innerHTML = list.map((s, i) => `<button class="sw ${state.stone === s.id ? 'is-sel' : ''}" data-stone="${s.id}" style="transition-delay:${Math.min(i, 12) * 35}ms">
-      <span class="sw__img"><img src="${s.sw}" alt="${esc(s.name)}" loading="lazy" decoding="async">${hasSahne(s) ? '<em class="sw__tag">Mutfakta gör</em>' : ''}</span>
+  swEl.innerHTML = list.map((s, i) => `<button class="sw ${state.stone === s.id ? 'is-sel' : ''}" data-stone="${s.id}" style="animation-delay:${Math.min(i, 15) * 25}ms">
+      <span class="sw__img"><img src="${s.sw}" alt="${esc(s.name)}" loading="lazy" decoding="async">${hasSahne(s) ? '<i class="sw__dot" aria-label="Mutfakta görünümü var"></i>' : ''}</span>
       <span class="sw__name">${esc(s.name)}</span>
-      <span class="sw__meta">${s.code ? s.code + ' · ' : ''}${famName(s.fam)}</span>
+      ${s.code ? `<span class="sw__meta">${s.code}</span>` : ''}
     </button>`).join('');
-  $$('.sw', swEl).forEach(t => sio.observe(t));
 }
-linesEl.addEventListener('click', e => { const b = e.target.closest('[data-line]'); if (!b) return; state.line = b.dataset.line; state.fam = null; renderLines(); renderSwatches(); });
+linesEl.addEventListener('click', e => { const b = e.target.closest('[data-line]'); if (!b) return; state.line = b.dataset.line; state.fam = null; renderLines(); renderSwatches(); $('#palBody').scrollTop = 0; });
 famsEl.addEventListener('click', e => { const b = e.target.closest('[data-fam]'); if (!b) return; state.fam = b.dataset.fam || null; renderLines(); renderSwatches(); });
 swEl.addEventListener('click', e => { const t = e.target.closest('[data-stone]'); if (t) openStone(t.dataset.stone); });
 
@@ -146,13 +171,7 @@ function select(stone) {
   const s = stoneById(stone);
   scene && s && scene.setStone(s.tx);
 }
-function updateSel() {
-  const s = stoneById(state.stone);
-  document.body.classList.toggle('has-sel', !!s);
-  if (!s) return;
-  $('#selSw').style.backgroundImage = `url(${s.sw})`;
-  $('#selTxt').textContent = `${s.name} · ${LINES[s.line].short}`;
-}
+function updateSel() {}
 
 /* ================= YAPILAN İŞLER ================= */
 function renderJobs() {
@@ -161,9 +180,7 @@ function renderJobs() {
     const stones = [...new Set(c.imgs.map(x => x.stone))].map(stoneById).filter(Boolean);
     return `<button class="job reveal" data-cat="${c.id}" style="transition-delay:${(i % 4) * 70}ms">
       <span class="job__img">${cover ? `<img src="${img(cover.src, 1)}" alt="${esc(c.name)}" loading="lazy" decoding="async">` : ''}</span>
-      <span class="job__cap"><b>${esc(c.name)}</b><small>${c.imgs.length} görsel · ${stones.length} renk</small></span>
-      <span class="job__dots">${stones.slice(0, 6).map(s => `<i style="background-image:url(${s.sw})"></i>`).join('')}${stones.length > 6 ? `<em>+${stones.length - 6}</em>` : ''}</span>
-      <span class="job__go">→</span>
+      <span class="job__cap"><b>${esc(c.name)}</b><small>${stones.length} renkte örnek</small></span>
     </button>`;
   }).join('');
   $$('.job').forEach(el => io.observe(el));
@@ -240,7 +257,7 @@ function goSlide(i, instant) {
 function updWa() { $('#tvWa').href = waLink(waMessage(store.get('win')?.prize)); }
 function closeViewer(fromPop) {
   if (viewer.hidden) return;
-  viewer.hidden = true; document.body.classList.remove('tv-open'); lockScroll(false);
+  viewer.hidden = true; document.body.classList.remove('tv-open'); if (pal.hidden) lockScroll(false);
   if (!fromPop && history.state?.tv) history.back();
 }
 viewer.addEventListener('click', e => {
@@ -252,9 +269,9 @@ viewer.addEventListener('click', e => {
   if (d) { $$('.tv__slide img', vTrack).forEach(i => i.classList.add('swap')); setTimeout(() => openStone(d.dataset.dot), 220); }
 });
 $('#tvWa').addEventListener('click', () => track('Contact', { content_name: state.stone }));
-addEventListener('popstate', () => { closeViewer(true); closeWheel(true); });
+addEventListener('popstate', () => { if (!wm.hidden) closeWheel(true); else if (!viewer.hidden) closeViewer(true); else closePal(true); });
 addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeWheel(); closeViewer(); }
+  if (e.key === 'Escape') { if (!wm.hidden) closeWheel(); else if (!viewer.hidden) closeViewer(); else closePal(); }
   if (!viewer.hidden && e.key === 'ArrowRight') goSlide(vIdx + 1);
   if (!viewer.hidden && e.key === 'ArrowLeft') goSlide(vIdx - 1);
 });
@@ -309,7 +326,7 @@ function openWheel() {
 }
 function closeWheel(fromPop) {
   if (wm.hidden) return;
-  wm.hidden = true; if (viewer.hidden) lockScroll(false);
+  wm.hidden = true; if (viewer.hidden && pal.hidden) lockScroll(false);
   if (!fromPop && history.state?.wm) history.back();
 }
 document.addEventListener('click', e => { if (e.target.closest('[data-open-wheel]')) { e.preventDefault(); openWheel(); } });
@@ -390,7 +407,7 @@ function confetti() {
 /* ================= BOOT ================= */
 $('#yr').textContent = new Date().getFullYear();
 const st0 = stoneById(state.stone); if (st0) state.line = st0.line;
-renderLines(); renderSwatches(); renderJobs(); updateSel();
+renderSeries(); renderJobs();
 
 const pct = $('#loaderPct');
 let shown = 0;

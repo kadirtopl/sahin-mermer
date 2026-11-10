@@ -46,7 +46,7 @@
 <header class="nav" id="nav">
   <a href="#top" class="nav__logo" aria-label="Şahin Mermer Granit">
     <img class="nav__mark" src="assets/logo-mark.svg" alt="" width="44" height="44">
-    <span class="nav__name">ŞAHİN<small>Mermer &amp; Granit</small></span>
+    <span class="nav__name">ŞAHİN<small>Mermer · Granit</small></span>
   </a>
   <nav class="nav__links">
     <a href="#tas-sec">Taşlar</a>
@@ -63,12 +63,12 @@
  <div class="hero__pin">
   <div class="ring-labels" id="ringLabels" aria-hidden="true"></div>
   <div class="hero__inner">
-    <p class="eyebrow reveal"><span class="pulse"></span> Instagram'dan gelenlere özel · İndirim çarkı aktif</p>
+    <p class="eyebrow reveal"><span class="pulse"></span> İndirim çarkı aktif</p>
     <h1 class="hero__title">
       <span class="line"><span>Taşın en</span></span>
       <span class="line"><span><em>akışkan</em> hâli.</span></span>
     </h1>
-    <p class="hero__lead reveal">Maestro Kuvars ve Porselen’in tüm renkleri burada. Taşını seç, <strong>mekânında gör.</strong> Ölçü, kesim ve montaj bizden.</p>
+    <p class="hero__lead reveal">Kuvars ve porselen tezgah. Ölçü, kesim ve montaj bizden.</p>
     <div class="hero__cta reveal">
       <a href="#tas-sec" class="btn btn--gold magnetic"><span>Taşını Seç ↓</span></a>
       <button class="btn btn--ghost magnetic" data-open-wheel><span>🎁 İndirim Çarkı</span></button>
@@ -84,14 +84,11 @@
     <header class="sec-head sec-head--row">
       <div>
         <p class="eyebrow eyebrow--dark">Taş kataloğu</p>
-        <h2 class="h2">Taşını seç,<br><em>renk renk gez.</em></h2>
+        <h2 class="h2">Taşını<br><em>seç.</em></h2>
       </div>
-      <p class="muted">Maestro Kuvars ve Porselen serilerimizin tüm renkleri. Bir taşa dokun: plakasını ve uygulandığı mekânları gör.</p>
+      <p class="muted">Üç seri, 139 renk. Bir seriye dokunun, renkleri açılsın.</p>
     </header>
-    <div class="lines" id="lines" role="tablist" aria-label="Seri"></div>
-    <p class="line-desc" id="lineDesc"></p>
-    <div class="fams" id="fams" aria-label="Renk"></div>
-    <div class="swatches" id="swatches"></div>
+    <div class="series" id="series"></div>
   </div>
 </section>
 
@@ -103,7 +100,7 @@
         <p class="eyebrow">Yapılan işler</p>
         <h2 class="h2">Ne yaptırmak<br><em>istiyorsunuz?</em></h2>
       </div>
-      <p class="muted">Bir kategoriye dokunun; o işi farklı taşlarla, renk renk görün.</p>
+      <p class="muted">Bir işe dokunun, örnekleri açılsın.</p>
     </header>
     <div class="jobgrid" id="jobgrid"></div>
   </div>
@@ -117,7 +114,6 @@
       <p class="eyebrow">Yakından bakın</p>
       <h2 class="h2">Damar, kenardan<br><em>kesintisiz akar.</em></h2>
       <p class="muted">Waterfall adalarda plakayı 45° gönye ile birleştiriyoruz; damar üst yüzeyden yere kadar tek parça gibi devam eder.</p>
-      <button class="btn btn--gold magnetic" data-open-wheel><span>🎁 Fiyat al — önce çarkı çevir</span></button>
     </div>
   </div>
 </section>
@@ -141,7 +137,6 @@
   <div class="final__cta">
     <button class="btn btn--gold magnetic" data-open-wheel><span>🎁 Önce Çarkı Çevir</span></button>
     <a class="btn btn--ghost magnetic" data-wa="Merhaba, tezgah için fiyat almak istiyorum." href="#"><span>WhatsApp'tan Yaz</span></a>
-    <a class="btn btn--ghost magnetic" href="tel:+905465994669"><span>📞 0546 599 46 69</span></a>
   </div>
 </section>
 
@@ -187,11 +182,18 @@
   </div>
 </div>
 
-<!-- SELECTION BAR -->
-<div class="selbar" id="selbar">
-  <div class="selbar__sw" id="selSw"></div>
-  <div class="selbar__txt"><small>Seçiminiz</small><b id="selTxt">Beğendiğiniz taşı seçin</b></div>
-  <button class="btn btn--wa btn--sm" data-open-wheel><span>WhatsApp ile sipariş</span></button>
+<!-- RENK PANELİ -->
+<div class="pal" id="pal" role="dialog" aria-modal="true" aria-label="Renkler" hidden>
+  <div class="pal__top">
+    <button class="pal__back" data-pclose aria-label="Geri">←</button>
+    <div class="pal__title"><b id="palTitle"></b><small id="palSub"></small></div>
+  </div>
+  <div class="pal__body" id="palBody">
+    <div class="segs" id="lines" role="tablist" aria-label="Seri"></div>
+    <div class="fams" id="fams" aria-label="Renk"></div>
+    <div class="swatches" id="swatches"></div>
+    <p class="pal__note"><i></i> Mutfakta görünümü olan renkler</p>
+  </div>
 </div>
 
 <!-- WHEEL MODAL -->
