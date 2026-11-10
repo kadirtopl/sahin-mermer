@@ -124,11 +124,13 @@ function renderLines() {
     FAMS.filter(f => have.has(f.id)).map(f => `<button class="fam ${state.fam === f.id ? 'is-on' : ''}" data-fam="${f.id}"><i style="background:${f.dot}"></i>${f.name}</button>`).join('');
 }
 function renderSwatches() {
-  const list = STONES.filter(s => s.line === state.line && (!state.fam || s.fam === state.fam));
+  const hasSahne = s => s.imgs.some(x => x.cat === 'sahne');
+  const list = STONES.filter(s => s.line === state.line && (!state.fam || s.fam === state.fam))
+    .map((s, i) => [s, i]).sort((a, b) => (hasSahne(b[0]) - hasSahne(a[0])) || a[1] - b[1]).map(x => x[0]);
   swEl.innerHTML = list.map((s, i) => `<button class="sw ${state.stone === s.id ? 'is-sel' : ''}" data-stone="${s.id}" style="transition-delay:${Math.min(i, 12) * 35}ms">
-      <span class="sw__img"><img src="${s.sw}" alt="${esc(s.name)}" loading="lazy" decoding="async"></span>
+      <span class="sw__img"><img src="${s.sw}" alt="${esc(s.name)}" loading="lazy" decoding="async">${hasSahne(s) ? '<em class="sw__tag">Mutfakta gör</em>' : ''}</span>
       <span class="sw__name">${esc(s.name)}</span>
-      <span class="sw__meta">${s.code ? s.code + ' · ' : ''}${s.imgs.length ? s.imgs.length + ' uygulama' : famName(s.fam)}</span>
+      <span class="sw__meta">${s.code ? s.code + ' · ' : ''}${famName(s.fam)}</span>
     </button>`).join('');
   $$('.sw', swEl).forEach(t => sio.observe(t));
 }
@@ -189,11 +191,12 @@ function openStone(id, start = 0) {
   openViewerShell();
   $('#tvTitle').textContent = s.name;
   $('#tvSub').textContent = `${lineName(s)}${s.code ? ' · ' + s.code : ''} · ${famName(s.fam)}`;
-  $('#tvDesc').textContent = s.imgs.length
-    ? `${LINES[s.line].desc} Kaydırarak plakayı ve uygulandığı ${s.imgs.length} mekânı görün.`
-    : `${LINES[s.line].desc} Bu rengin uygulama fotoğrafını WhatsApp’tan isteyebilirsiniz.`;
-  const slides = [{ full: s.slab, stone: s.id, label: 'Plaka görünümü', slab: 1 },
-    ...s.imgs.map(x => ({ full: img(x.src), stone: s.id, label: x.cat ? catById(x.cat).name : 'Uygulama', ai: x.ai }))];
+  $('#tvDesc').textContent = `${LINES[s.line].desc} Kaydırarak mutfakta, plakada ve uygulamalarda görün.`;
+  const lab = x => x.cat === 'sahne' ? 'Mutfak tezgahı · Ada · Kahve köşesi' : (x.cat && catById(x.cat) ? catById(x.cat).name : 'Uygulama');
+  const sahne = s.imgs.filter(x => x.cat === 'sahne'), rest = s.imgs.filter(x => x.cat !== 'sahne');
+  const slides = [...sahne.map(x => ({ full: img(x.src), stone: s.id, label: lab(x), ai: x.ai })),
+    { full: s.slab, stone: s.id, label: 'Plaka görünümü', slab: 1 },
+    ...rest.map(x => ({ full: img(x.src), stone: s.id, label: lab(x), ai: x.ai }))];
   // alt şerit: aynı seri + aynı renk ailesinden taşlar
   const sib = STONES.filter(x => x.line === s.line && x.fam === s.fam);
   $('#tvThumbs').innerHTML = sib.map(x => `<button class="dot ${x.id === s.id ? 'is-on' : ''}" data-dot="${x.id}" style="background-image:url(${x.sw})" aria-label="${esc(x.name)}"><span>${esc(x.name)}</span></button>`).join('');

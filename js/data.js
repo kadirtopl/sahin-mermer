@@ -21,7 +21,8 @@ export const PRIZE_HOURS = 48;
 // Ürün serileri
 export const LINES = {
   m: { name: 'Maestro Kuvars', short: 'Kuvars', desc: 'Granitaş güvencesiyle kuvars yüzey: leke tutmaz, gözeneksiz, mutfak için en çok tercih edilen.' },
-  p: { name: 'Porselen', short: 'Porselen', desc: 'Infinity porselen levha: ısıya, çizilmeye ve UV’ye dayanıklı; büyük ebat, derzsiz ve ince.' },
+  b: { name: 'BiQSlab Porselen', short: 'BiQSlab', desc: 'BiQSlab Maxton 160×320 cm, 12 mm porselen levha: mermer, taş ve ahşap görünümlü; ısıya ve çizilmeye dayanıklı.' },
+  p: { name: 'Infinity Porselen', short: 'Infinity', desc: 'Infinity porselen levha: ısıya, çizilmeye ve UV’ye dayanıklı; büyük ebat, derzsiz ve ince.' },
 };
 export const FAMS = [
   { id: 'beyaz', name: 'Beyaz', dot: '#f3f0ea' },
