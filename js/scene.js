@@ -27,7 +27,7 @@ export async function createScene(canvas, { stones, mobile }) {
 
   const loader = new THREE.TextureLoader();
   const cache = {};
-  const tex = id => cache[id] || (cache[id] = new Promise(res => loader.load(`assets/stone/${id}.webp`, t => {
+  const tex = id => cache[id] || (cache[id] = new Promise(res => loader.load(id, t => {
     t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = renderer.capabilities.getMaxAnisotropy(); res(t);
   }, undefined, () => res(null))));
 
@@ -55,7 +55,7 @@ export async function createScene(canvas, { stones, mobile }) {
   // 0 = dönen 3D halka: tüm taşlar yuvarlak bir çember üzerinde, her biri farklı salınımla
   // 0 = dönen 3D halka · 1 = halka aşağı iner · 2 = tamamen aşağıda, ekrandan çıkar
   let spin = 0, tNow = 0, scrollSpin = 0;
-  const RING = mobile ? { cx: 0, cy: 2.75, cz: -2.2, R: 2.35, s: .5 } : { cx: 2.7, cy: .15, cz: -1.6, R: 2.9, s: .66 };
+  const RING = mobile ? { cx: 0, cy: 3.15, cz: -2.4, R: 2.3, s: .46 } : { cx: 2.7, cy: .15, cz: -1.6, R: 2.9, s: .66 };
   const ring = (i, dy, sMul, tilt) => {
     const a = i / N * Math.PI * 2 + spin + scrollSpin;
     const wave = Math.sin(a * 2 + tNow * .9 + i) * (mobile ? .28 : .35);

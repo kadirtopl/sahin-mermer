@@ -222,7 +222,7 @@ main,.foot{position:relative;z-index:1}
 .tile__body p{font-size:14px;opacity:.8;max-width:36ch}
 .tile__body b{display:inline-block;margin-top:10px;font-size:13px;color:var(--gold);transform:translateX(-6px);opacity:0;transition:all .5s var(--ease)}
 .tile:hover .tile__body b{opacity:1;transform:none}
-.tile--text{background:url(../assets/stone/nero-marquina.webp) center/cover}
+.tile--text{background:url(../assets/cat/tas/p-sahara-noir-tx.webp) center/cover}
 .tile--text::after{background:linear-gradient(180deg,rgba(0,0,0,.2),rgba(0,0,0,.75))}
 .tile--text .tile__body b{opacity:1;transform:none}
 @media (max-width:900px){.bento{grid-template-columns:1fr 1fr;grid-auto-rows:220px}.tile--xl{grid-column:span 2}.tile--wide{grid-column:span 2}.tile__body b{opacity:1;transform:none}}
@@ -257,7 +257,7 @@ main,.foot{position:relative;z-index:1}
 .process{padding:clamp(80px,12vw,160px) 0}
 .steps{list-style:none;display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(16px,2vw,28px)}
 .steps li{padding:32px 26px;border-radius:var(--r);background:#fff;box-shadow:0 20px 50px -35px rgba(0,0,0,.4);position:relative;overflow:hidden}
-.steps li::before{content:"";position:absolute;inset:0 0 auto;height:4px;background:url(../assets/stone/statuario-k.webp) center/cover}
+.steps li::before{content:"";position:absolute;inset:0 0 auto;height:4px;background:url(../assets/cat/tas/p-calacatta-oro-sw.webp) center/cover}
 .steps b{font-family:var(--serif);font-size:52px;font-weight:300;font-style:italic;color:var(--gold-2);line-height:1}
 .steps h3{font-size:18px;margin:16px 0 8px}
 .steps p{font-size:14.5px;color:var(--dark-dim)}
@@ -284,7 +284,7 @@ main,.foot{position:relative;z-index:1}
 .faq details p{margin-top:12px;color:var(--dark-dim);max-width:70ch}
 
 /* ---------- final + footer ---------- */
-.final{padding:clamp(100px,16vw,200px) var(--gut);text-align:center;background:radial-gradient(60% 60% at 50% 100%,rgba(217,183,122,.16),transparent 70%),url(../assets/stone/nero-marquina.webp) center/cover;background-blend-mode:normal,multiply;position:relative}
+.final{padding:clamp(100px,16vw,200px) var(--gut);text-align:center;background:radial-gradient(60% 60% at 50% 100%,rgba(217,183,122,.16),transparent 70%),url(../assets/cat/tas/p-sahara-noir-tx.webp) center/cover;background-blend-mode:normal,multiply;position:relative}
 .final::before{content:"";position:absolute;inset:0;background:rgba(11,10,9,.72)}
 .final>*{position:relative}
 .final__title{font-family:var(--serif);font-weight:300;font-size:clamp(44px,8vw,128px);line-height:.95;letter-spacing:-.03em}
@@ -377,3 +377,87 @@ main,.foot{position:relative;z-index:1}
 .film__vid video{width:100%;aspect-ratio:9/16;object-fit:cover;background:var(--ink-2)}
 .film__txt .btn{margin-top:28px}
 @media (max-width:820px){.film__in{grid-template-columns:1fr}.film__vid{max-width:360px;margin:0 auto}.film__txt{text-align:center}.film__txt .muted{margin:0 auto}}
+
+/* ================= v2: taş kataloğu ================= */
+.eyebrow--dark{color:var(--gold-2)}
+.lines{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:640px;margin:8px 0 10px}
+.ser{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:16px 18px;border-radius:18px;border:1px solid rgba(27,25,22,.14);background:rgba(255,255,255,.55);text-align:left;transition:all .4s var(--ease)}
+.ser b{font-family:var(--serif);font-weight:500;font-size:clamp(21px,3vw,26px);line-height:1}
+.ser small{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--dark-dim)}
+.ser.is-on{background:#1b1916;color:var(--stone);border-color:#1b1916;box-shadow:0 18px 40px -22px rgba(0,0,0,.6)}
+.ser.is-on small{color:var(--gold)}
+.line-desc{font-size:14px;color:var(--dark-dim);max-width:62ch;margin:0 0 18px;min-height:2.6em}
+.fams{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 14px;margin:0 calc(-1 * var(--gut)) 6px;padding-left:var(--gut);padding-right:var(--gut);scrollbar-width:none}
+.fams::-webkit-scrollbar{display:none}
+.fam{flex:0 0 auto;display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 16px;border-radius:999px;border:1px solid rgba(27,25,22,.16);font-size:13px;font-weight:500;color:var(--dark-text);background:transparent;transition:all .3s var(--ease)}
+.fam i{width:14px;height:14px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
+.fam.is-on{background:var(--gold-2);border-color:var(--gold-2);color:#fff}
+.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:clamp(14px,2vw,22px) clamp(10px,1.6vw,18px)}
+@media (max-width:560px){.swatches{grid-template-columns:repeat(3,1fr);gap:16px 10px}}
+.sw{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;background:none;color:var(--dark-text);opacity:0;transform:translateY(16px) scale(.96);transition:opacity .6s var(--ease),transform .6s var(--ease)}
+.sw.in{opacity:1;transform:none}
+.sw__img{position:relative;width:100%;aspect-ratio:1;border-radius:50%;overflow:hidden;background:var(--stone-2);box-shadow:0 14px 30px -16px rgba(0,0,0,.55),inset 0 0 0 1px rgba(0,0,0,.06);transition:transform .5s var(--ease),box-shadow .5s}
+.sw__img img{width:100%;height:100%;object-fit:cover;transform:scale(1.25);transition:transform 1.2s var(--ease)}
+.sw__img::after{content:"";position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 30% 22%,rgba(255,255,255,.55),transparent 42%);pointer-events:none}
+.sw:hover .sw__img{transform:translateY(-4px);box-shadow:0 24px 40px -18px rgba(0,0,0,.6)}
+.sw:hover .sw__img img{transform:scale(1.4) rotate(6deg)}
+.sw.is-sel .sw__img{outline:3px solid var(--gold-2);outline-offset:4px}
+.sw__name{font-family:var(--serif);font-size:19px;line-height:1.05;margin-top:4px}
+.sw__meta{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dark-dim)}
+
+/* ================= v2: yapılan işler ================= */
+.jobs{padding:clamp(80px,11vw,140px) 0;background:var(--ink)}
+.jobgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(12px,1.6vw,20px)}
+.job:nth-child(1),.job:nth-child(2){grid-column:span 2}
+@media (max-width:900px){.jobgrid{grid-template-columns:1fr 1fr}.job:nth-child(1){grid-column:span 2}.job:nth-child(2){grid-column:auto}}
+.job{position:relative;display:block;text-align:left;border-radius:var(--r);overflow:hidden;background:var(--ink-3);color:#fff;aspect-ratio:4/5;opacity:0;transform:translateY(30px);transition:opacity .9s var(--ease),transform .9s var(--ease)}
+.job.in{opacity:1;transform:none}
+.job:nth-child(1),.job:nth-child(2){aspect-ratio:16/10}
+@media (max-width:900px){.job:nth-child(1){aspect-ratio:16/11}.job:nth-child(2){aspect-ratio:4/5}}
+.job__img{position:absolute;inset:0;background:linear-gradient(135deg,#2a2622,#151311)}
+.job__img img{width:100%;height:100%;object-fit:cover;transition:transform 1.4s var(--ease)}
+.job:hover .job__img img{transform:scale(1.07)}
+.job::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 35%,rgba(0,0,0,.78));pointer-events:none}
+.job__cap{position:absolute;left:18px;right:56px;bottom:16px;z-index:2;line-height:1.1}
+.job__cap b{display:block;font-family:var(--serif);font-weight:400;font-size:clamp(24px,3vw,34px)}
+.job__cap small{display:block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-top:6px}
+.job__dots{position:absolute;top:14px;left:14px;z-index:2;display:flex;align-items:center}
+.job__dots i{width:26px;height:26px;border-radius:50%;background-size:cover;border:2px solid rgba(255,255,255,.9);margin-right:-8px;box-shadow:0 4px 10px rgba(0,0,0,.4)}
+.job__dots em{margin-left:14px;font-size:11px;font-style:normal;font-family:var(--sans);color:#fff;background:rgba(0,0,0,.45);padding:3px 8px;border-radius:999px}
+.job__go{position:absolute;right:14px;bottom:14px;z-index:2;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--gold);color:#1a140b;font-weight:700;transition:transform .4s var(--ease)}
+.job:hover .job__go{transform:translateX(4px)}
+.job--soon .job__img{display:grid;place-items:center}
+
+/* ================= v2: görüntüleyici ================= */
+.tv__slide--slab img{max-height:92%;border-radius:10px}
+.tv__tag{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;z-index:3;white-space:nowrap}
+.tv__tag>span,.tv__tag>button{font-size:12.5px;letter-spacing:.04em;color:#fff;background:rgba(10,9,8,.62);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.14);padding:8px 14px;border-radius:999px}
+.tv__tag u{text-decoration:none;color:var(--gold);margin-left:6px;font-weight:600}
+.tv__tag i{font-style:normal;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.75)}
+.tv__thumbs{display:flex;gap:12px;overflow-x:auto;padding:8px 6px 12px;scrollbar-width:none;justify-content:safe center}
+.tv__thumbs::-webkit-scrollbar{display:none}
+.tv__thumbs .dot{position:relative;width:48px;height:48px}
+.tv__thumbs .dot span{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:4px;font-size:9.5px;white-space:nowrap;color:var(--text-dim);opacity:0;transition:opacity .3s}
+.tv__thumbs .dot.is-on span{opacity:1;color:var(--gold)}
+.tv__thumbs{padding-bottom:22px}
+.tv__cta{display:grid;grid-template-columns:1.2fr 1fr;gap:10px;max-width:640px;margin:0 auto;width:100%}
+.tv__cta .btn{max-width:none;margin:0}
+@media (max-width:520px){.tv__cta{grid-template-columns:1fr}.tv__cta .btn--gold{height:46px}}
+.tv__info p{margin-bottom:6px}
+
+/* ================= v2: çark ================= */
+.wm__left{text-align:center;margin-top:18px;font-size:14px;color:var(--text-dim);min-height:2.6em}
+.wm__left b{color:var(--gold)}
+.wm__sub{margin:-8px 0 16px}
+.btn--big{height:60px;font-size:16px}
+.wm__picked{margin-bottom:16px}
+.tv__back{white-space:nowrap;flex:0 0 auto}
+.tv__count{flex:0 0 auto;min-width:44px}
+.tv__title{min-width:0}
+.tv__title small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.16em}
+.tv__thumbs{justify-content:flex-start;padding-left:14px;padding-right:14px}
+@media (min-width:700px){.tv__thumbs{justify-content:safe center}}
+.tv__cta{grid-template-columns:1.25fr 1fr !important}
+.tv__cta .btn{height:52px;padding:0 14px;font-size:14px}
+@media (max-width:420px){.tv__cta .btn{font-size:13px;padding:0 10px}}
+@media (max-width:720px){.job__dots i:nth-child(n+5){display:none}.job:not(:first-child) .job__dots em{display:none}}
