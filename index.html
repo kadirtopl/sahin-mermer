@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Şahin Mermer Granit — Mutfak Tezgahı, Mermer & Granit Uygulama</title>
+<meta name="description" content="Şahin Mermer Granit: mutfak tezgahı, ada, banyo lavabo, ışıklı oniks ve ticari tezgahlar. Doğal mermer, granit, kuvars (çimstone, belenco) ve porselen. Ücretsiz keşif, kendi atölyemizde üretim. Çarkı çevir, indirimini WhatsApp'tan al.">
+<meta name="theme-color" content="#0b0a09">
+<meta property="og:title" content="Şahin Mermer Granit — Taşın en akışkan hâli">
+<meta property="og:description" content="Taşını seç, çarkı çevir, indirimini WhatsApp'tan al. Mutfak tezgahı · Ada · Banyo · Oniks · Ticari.">
+<meta property="og:image" content="assets/img/mutfak-siyah.webp">
+<meta name="apple-mobile-web-app-title" content="Şahin Mermer">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/svg+xml" href="assets/logo-mark.svg">
+<link rel="apple-touch-icon" href="assets/logo-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preload" as="image" href="assets/stone/statuario.webp">
+<link rel="stylesheet" href="css/style.css">
+<script>try{history.scrollRestoration="manual"}catch(e){}</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"HomeAndConstructionBusiness","name":"Şahin Mermer Granit","founder":"Muhammet Ali Şahin","telephone":"+90 546 599 46 69","description":"Mutfak tezgahı, banyo lavabo, ada, oniks ve ticari tezgah; mermer, granit, kuvars ve porselen uygulama.","priceRange":"₺₺"}
+</script>
+<!-- META PIXEL: Instagram reklamı için Pixel ID'nizi aşağıya yazıp yorum işaretlerini kaldırın.
+<script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','PIXEL_ID_BURAYA');fbq('track','PageView');</script>
+-->
+</head>
+<body>
+
+<!-- LOADER -->
+<div class="loader" id="loader" aria-hidden="true">
+  <svg class="loader__vein" viewBox="0 0 600 200" preserveAspectRatio="none">
+    <path d="M0 140 C 80 120, 120 60, 200 80 S 320 160, 400 100 S 520 40, 600 70" />
+    <path d="M60 200 C 120 150, 160 150, 230 120 S 330 60, 420 150" />
+  </svg>
+  <div class="loader__brand"><img src="assets/logo-mark.svg" alt="" width="92" height="92">ŞAHİN<span>mermer · granit</span></div>
+  <div class="loader__pct"><span id="loaderPct">0</span>%</div>
+</div>
+
+<canvas id="stage" aria-hidden="true"></canvas>
+<div class="grain" aria-hidden="true"></div>
+<div class="cursor" aria-hidden="true"><span class="cursor__dot"></span><span class="cursor__ring"></span></div>
+
+<!-- NAV -->
+<header class="nav" id="nav">
+  <a href="#top" class="nav__logo" aria-label="Şahin Mermer Granit">
+    <img class="nav__mark" src="assets/logo-mark.svg" alt="" width="44" height="44">
+    <span class="nav__name">ŞAHİN<small>Mermer &amp; Granit</small></span>
+  </a>
+  <nav class="nav__links">
+    <a href="#tas-sec">Mermerini Seç</a>
+    <a href="#sss">SSS</a>
+  </nav>
+  <button class="btn btn--gold btn--sm magnetic" data-open-wheel><span>🎁 Çarkı Çevir</span></button>
+</header>
+
+<main id="top">
+
+<!-- HERO -->
+<section class="hero" data-stage="hero">
+ <div class="hero__pin">
+  <div class="ring-labels" id="ringLabels" aria-hidden="true"></div>
+  <div class="hero__inner">
+    <p class="eyebrow reveal"><span class="pulse"></span> Instagram'dan gelenlere özel · İndirim çarkı aktif</p>
+    <h1 class="hero__title">
+      <span class="line"><span>Taşın en</span></span>
+      <span class="line"><span><em>akışkan</em> hâli.</span></span>
+    </h1>
+    <p class="hero__lead reveal">Mermerini seç, mutfağında nasıl duracağını <strong>hemen gör.</strong> Ölçü, kesim ve montaj bizden.</p>
+    <div class="hero__cta reveal">
+      <a href="#tas-sec" class="btn btn--gold magnetic"><span>Mermerini Seç ↓</span></a>
+      <button class="btn btn--ghost magnetic" data-open-wheel><span>🎁 İndirim Çarkı</span></button>
+    </div>
+  </div>
+  <div class="scrollcue" aria-hidden="true"><span></span>Kaydır</div>
+ </div>
+</section>
+
+<!-- STONE PICKER -->
+<section class="picker light" id="tas-sec">
+  <div class="wrap">
+    <header class="sec-head sec-head--row">
+      <div>
+        
+        <h2 class="h2">Mermerini seç,<br><em>mutfağında gör.</em></h2>
+      </div>
+      <p class="muted">Bir mermere dokun, o mermer takılmış tezgahı gör. Beğenirsen tek dokunuşla sipariş ver.</p>
+    </header>
+
+    <div class="cats" id="cats" role="tablist" aria-label="Kategori" hidden></div>
+    <div class="themes" id="themes"></div>
+    <p class="fine fine--c">Görseller, kendi uygulamalarımızın yapay zekâ ile farklı taşlarla görselleştirilmiş hâlidir. Gerçek plaka seçimi keşifte birlikte yapılır.</p>
+  </div>
+</section>
+
+<!-- FILM -->
+<section class="film">
+  <div class="wrap film__in">
+    <div class="film__vid"><video class="autoplay" src="assets/vid/tanitim-ada.mp4" poster="assets/vid/tanitim-ada.webp" muted loop playsinline preload="none"></video></div>
+    <div class="film__txt">
+      <p class="eyebrow">Yakından bakın</p>
+      <h2 class="h2">Damar, kenardan<br><em>kesintisiz akar.</em></h2>
+      <p class="muted">Waterfall adalarda plakayı 45° gönye ile birleştiriyoruz; damar üst yüzeyden yere kadar tek parça gibi devam eder.</p>
+      <button class="btn btn--gold magnetic" data-open-wheel><span>🎁 Fiyat al — önce çarkı çevir</span></button>
+    </div>
+  </div>
+</section>
+
+<!-- WORKS -->
+<section class="works">
+  <div class="wrap"><h2 class="h2 h2--sm">Gerçek <em>işlerimiz.</em></h2></div>
+  <div class="works__row">
+    <figure class="card card--p"><div class="card__img"><img src="assets/img/mutfak-calacatta.webp" alt="Beyaz calacatta kuvars mutfak, tezgah arası dahil" loading="lazy"></div><figcaption><b>Calacatta Kuvars</b> Tezgah + tezgah arası</figcaption></figure>
+    <figure class="card card--l"><div class="card__img"><img src="assets/img/evye-calacatta.webp" alt="Altan montaj evye, calacatta tezgah" loading="lazy"></div><figcaption><b>Altan Evye</b> Pürüzsüz birleşim</figcaption></figure>
+    <figure class="card card--p"><div class="card__img"><img src="assets/img/mutfak-siyah.webp" alt="Siyah damarlı tezgah" loading="lazy"></div><figcaption><b>Nero Görünüm</b> Siyah zemin, beyaz damar</figcaption></figure>
+    <figure class="card card--l"><div class="card__img"><img src="assets/img/kafe-tezgah.webp" alt="Kafe tezgahı ekipman kesimleri" loading="lazy"></div><figcaption><b>Kafe Bankosu</b> 9 ekipman kesimi + oval uç</figcaption></figure>
+    <figure class="card card--l"><div class="card__img"><img src="assets/img/mutfak-gri.webp" alt="Gri kuvars mutfak tezgahı ve tezgah arası" loading="lazy"></div><figcaption><b>Gri Kuvars</b> Tam boy tezgah arası</figcaption></figure>
+    <figure class="card card--l"><div class="card__img"><img src="assets/img/atolye-lavabo.webp" alt="Atölyede üretilen mermer lavabolar" loading="lazy"></div><figcaption><b>Atölyeden</b> Entegre lavabo üretimi</figcaption></figure>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq light" id="sss">
+  <div class="wrap wrap--narrow">
+    <header class="sec-head">
+      <p class="eyebrow">Merak edilenler</p>
+      <h2 class="h2">Sık sorulan <em>sorular.</em></h2>
+    </header>
+    <details><summary>Kuvars, porselen ve doğal mermer arasındaki fark nedir?</summary><p>Kuvars (çimstone, belenco vb.) leke tutmaya dirençli ve bakımı kolaydır; mutfakta en çok tercih edilendir. Porselen tezgah ısıya ve çizilmeye çok dayanıklıdır, ince ve modern durur. Doğal mermer eşsiz damarlara sahiptir ama asitli maddelere karşı bakım ister. Granit çok serttir, yoğun kullanım için idealdir. Hangisinin size uygun olduğunu WhatsApp'ta birlikte seçeriz.</p></details>
+    <details><summary>Fiyat nasıl belirleniyor?</summary><p>Metretül / metrekare, seçilen malzeme, kenar profili, evye-ocak kesimleri ve tezgah arası olup olmamasına göre. Fotoğraf ve kaba ölçü ile hızlı ön fiyat veririz, kesin fiyat keşif sonrası netleşir.</p></details>
+    <details><summary>Çark indirimi nasıl kullanılır?</summary><p>Çarkı çevirip çıkan hediyeyi WhatsApp mesajıyla bize iletin. Mesajdaki kod siparişinizde uygulanır. Her kişi bir kez çevirebilir.</p></details>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final">
+  <h2 class="final__title"><span>Tezgahınız</span><em>bir mesaj uzağınızda.</em></h2>
+  <div class="final__cta">
+    <button class="btn btn--gold magnetic" data-open-wheel><span>🎁 Önce Çarkı Çevir</span></button>
+    <a class="btn btn--ghost magnetic" data-wa="Merhaba, tezgah için fiyat almak istiyorum." href="#"><span>WhatsApp'tan Yaz</span></a>
+    <a class="btn btn--ghost magnetic" href="tel:+905465994669"><span>📞 0546 599 46 69</span></a>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="foot__brand"><img src="assets/logo-mark.svg" alt="" width="56" height="56"><span>ŞAHİN</span><small>Mermer &amp; Granit</small></div>
+  <div class="foot__info">
+    <span>Muhammet Ali Şahin</span>
+    <a href="tel:+905465994669">0546 599 46 69</a>
+    <a href="#" data-wa="Merhaba, bilgi almak istiyorum.">WhatsApp</a>
+  </div>
+  <small>© <span id="yr"></span> Şahin Mermer Granit · Mermer dokuları: ambientCG (CC0)</small>
+</footer>
+
+<!-- MOBILE BAR -->
+<div class="mbar">
+  <a href="tel:+905465994669" aria-label="Ara">📞</a>
+  <button data-open-wheel>🎁 Çarkı Çevir — İndirim Kazan</button>
+  <a href="#" data-wa="Merhaba, tezgah için fiyat almak istiyorum." aria-label="WhatsApp" class="mbar__wa"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.4 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.5-3.9-4.7-4.1-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.4.6-.4.4c-.1.2-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1.1c.2-.3.4-.2.7-.1l1.9.9c.3.1.5.2.5.3.1.2.1.7-.1 1.3Z"/></svg></a>
+</div>
+
+<!-- THEME VIEWER -->
+<div class="tv" id="viewer" role="dialog" aria-modal="true" aria-label="Taş önizleme" hidden>
+  <div class="tv__top">
+    <button class="tv__back" data-vclose>← Geri</button>
+    <div class="tv__title"><b id="tvStone">Statuario</b><small id="tvCat">Mutfak</small></div>
+    <span class="tv__count" id="tvCount">1 / 3</span>
+  </div>
+  <div class="tv__stage" id="tvStage">
+    <div class="tv__track" id="tvTrack"></div>
+    <button class="tv__nav tv__nav--p" data-vnav="-1" aria-label="Önceki">‹</button>
+    <button class="tv__nav tv__nav--n" data-vnav="1" aria-label="Sonraki">›</button>
+    <span class="tv__ai">✦ Yapay zekâ görselleştirme</span>
+  </div>
+  <div class="tv__info">
+    <p id="tvDesc"></p>
+    <div class="tv__dots" id="tvDots" aria-label="Taş değiştir"></div>
+  </div>
+  <div class="tv__cta">
+    <button class="btn btn--gold btn--block" data-open-wheel><span>🎁 Bu taşla sipariş ver — önce çarkı çevir</span></button>
+  </div>
+</div>
+
+<!-- SELECTION BAR -->
+<div class="selbar" id="selbar">
+  <div class="selbar__sw" id="selSw"></div>
+  <div class="selbar__txt"><small>Seçiminiz</small><b id="selTxt">Beğendiğiniz taşı seçin</b></div>
+  <button class="btn btn--wa btn--sm" data-open-wheel><span>WhatsApp ile sipariş</span></button>
+</div>
+
+<!-- WHEEL MODAL -->
+<div class="wm" id="wheelModal" role="dialog" aria-modal="true" aria-labelledby="wmTitle" hidden>
+  <div class="wm__backdrop" data-close></div>
+  <div class="wm__box">
+    <button class="wm__x" data-close aria-label="Kapat">×</button>
+
+    <!-- step 1 -->
+    <div class="wm__step" data-step="form">
+      <p class="eyebrow"><b>02</b> · Şans çarkı</p>
+      <h3 class="wm__title" id="wmTitle">Çevirmeden önce<br><em>seni tanıyalım.</em></h3>
+      <form id="leadForm" novalidate>
+        <label>Adın<input name="name" autocomplete="given-name" placeholder="Örn. Ayşe" required></label>
+        <fieldset>
+          <legend>Ne yaptıracaksın?</legend>
+          <div class="chips chips--wrap" id="svcChips">
+            <button type="button" class="chip is-on">Mutfak tezgahı</button>
+            <button type="button" class="chip">Ada / Waterfall tezgah</button>
+            <button type="button" class="chip">Banyo lavabo tezgahı</button>
+            <button type="button" class="chip">Diğer</button>
+          </div>
+        </fieldset>
+        <label>Şehir / ilçe<input name="city" autocomplete="address-level2" placeholder="Örn. İzmit"></label>
+        <div class="wm__picked" id="wmPicked"></div>
+        <button class="btn btn--gold btn--block" type="submit"><span>Çarkı Aç →</span></button>
+        <p class="fine">Bilgilerin yalnızca WhatsApp mesajına eklenir, hiçbir yere kaydedilmez.</p>
+      </form>
+    </div>
+
+    <!-- step 2 -->
+    <div class="wm__step" data-step="spin" hidden>
+      <h3 class="wm__title"><span id="wmHello">Hadi</span>, <em>şansını dene!</em></h3>
+      <div class="wheel">
+        <div class="wheel__pin"></div>
+        <canvas id="wheelCanvas" width="720" height="720"></canvas>
+        <button class="wheel__hub" id="spinBtn">ÇEVİR</button>
+      </div>
+      <p class="fine">Herkes kazanır · Kişi başı 1 hak</p>
+    </div>
+
+    <!-- step 3 -->
+    <div class="wm__step" data-step="win" hidden>
+      <canvas id="confetti" class="confetti"></canvas>
+      <p class="eyebrow">Tebrikler 🎉</p>
+      <h3 class="wm__title"><em id="winPrize">%10 İndirim</em><br>kazandın!</h3>
+      <div class="ticket">
+        <div><small>Hediye kodun</small><b id="winCode">SMG-0000</b></div>
+        <div><small>Geçerlilik</small><b id="winTimer">48:00:00</b></div>
+      </div>
+      <p class="muted" id="winSummary"></p>
+      <a class="btn btn--wa btn--block" id="winWa" href="#" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.4 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.5-3.9-4.7-4.1-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.4.6-.4.4c-.1.2-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1.1c.2-.3.4-.2.7-.1l1.9.9c.3.1.5.2.5.3.1.2.1.7-.1 1.3Z"/></svg>
+        <span>Hediyemi WhatsApp'ta Al</span>
+      </a>
+      <p class="fine">Hediye, keşif sonrası verilen siparişte uygulanır. Başka kampanyayla birleşmez.</p>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+{
+ "mutfak": {
+  "statuario": [
+   "assets/gen/mutfak/statuario-1.webp",
+   "assets/gen/mutfak/statuario-2.webp"
+  ],
+  "nero-marquina": [
+   "assets/gen/mutfak/nero-marquina-1.webp",
+   "assets/gen/mutfak/nero-marquina-2.webp"
+  ],
+  "bianco-carrara": [
+   "assets/gen/mutfak/bianco-carrara-1.webp",
+   "assets/gen/mutfak/bianco-carrara-2.webp"
+  ],
+  "crema-marfil": [
+   "assets/gen/mutfak/crema-marfil-1.webp",
+   "assets/gen/mutfak/crema-marfil-2.webp"
+  ],
+  "grigio-venato": [
+   "assets/gen/mutfak/grigio-venato-1.webp",
+   "assets/gen/mutfak/grigio-venato-2.webp"
+  ],
+  "travertino": [
+   "assets/gen/mutfak/travertino-1.webp",
+   "assets/gen/mutfak/travertino-2.webp"
+  ],
+  "nero-antico": [
+   "assets/gen/mutfak/nero-antico-1.webp",
+   "assets/gen/mutfak/nero-antico-2.webp"
+  ],
+  "granit-verde": [
+   "assets/gen/mutfak/granit-verde-1.webp",
+   "assets/gen/mutfak/granit-verde-2.webp"
+  ]
+ }
+}
