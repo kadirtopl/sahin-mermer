@@ -117,14 +117,12 @@ const COVER = { m: 'm-fortuna', b: 'b-calacatta-oro', p: 'p-magellano' };
 function renderSeries() {
   $('#series').innerHTML = Object.entries(LINES).map(([k, l], i) => {
     const list = STONES.filter(s => s.line === k);
-    return `<button class="serc reveal" data-open-line="${k}" style="transition-delay:${i * 90}ms">
-      <span class="serc__img"><img src="assets/cat/sahne/${COVER[k]}-t.webp" alt="${esc(l.name)}" loading="lazy" decoding="async"></span>
-      <span class="serc__txt"><small>${list.length} renk</small><b>${esc(l.name)}</b>
-        <span class="serc__dots">${list.slice(0, 5).map(s => `<i style="background-image:url(${s.sw})"></i>`).join('')}</span></span>
-      <span class="serc__go" aria-hidden="true">→</span>
+    return `<button class="serr" data-open-line="${k}">
+      <span class="serr__dots">${list.slice(0, 4).map(s => `<i style="background-image:url(${s.sw})"></i>`).join('')}</span>
+      <span class="serr__t"><b>${esc(l.name)}</b><small>${list.length} renk</small></span>
+      <span class="serr__go" aria-hidden="true">→</span>
     </button>`;
   }).join('');
-  $$('.serc').forEach(el => io.observe(el));
 }
 $('#series').addEventListener('click', e => { const b = e.target.closest('[data-open-line]'); if (b) openPal(b.dataset.openLine); });
 function openPal(line) {
