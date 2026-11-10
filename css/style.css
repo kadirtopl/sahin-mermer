@@ -461,3 +461,4 @@ main,.foot{position:relative;z-index:1}
 .tv__cta .btn{height:52px;padding:0 14px;font-size:14px}
 @media (max-width:420px){.tv__cta .btn{font-size:13px;padding:0 10px}}
 @media (max-width:720px){.job__dots i:nth-child(n+5){display:none}.job:not(:first-child) .job__dots em{display:none}}
+@media (max-width:720px){.job:not(:first-child) .job__cap small{letter-spacing:.06em;font-size:10px;white-space:nowrap}.job:not(:first-child) .job__cap{right:50px;left:14px}}
