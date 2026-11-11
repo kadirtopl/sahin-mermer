@@ -92,6 +92,7 @@ export async function createScene(canvas, { stones, mobile }) {
     return { p: A.p.map((v, k) => lerp(v, B.p[k], t)), r: A.r.map((v, k) => lerp(v, B.r[k], t)), s: lerp(A.s, B.s, t) };
   }
 
+  let snapped = false;
   const clock = new THREE.Clock();
   function frame() {
     requestAnimationFrame(frame);
@@ -102,13 +103,14 @@ export async function createScene(canvas, { stones, mobile }) {
     spin += dragV;
     // her 4 saniyede bir taş kendi ekseninde takla atar
     if (false) { lastFlip = t; const k = (Math.random() * N) | 0; flip = { i: k, t0: performance.now(), swapped: true, axis: Math.random() < .5 ? 'x' : 'y' }; }
-    hero = Math.min(1, hero + .012);                 // intro fly-in
+    hero = Math.min(1, hero + dt * .9);                 // intro fly-in
     const intro = smooth(hero);
     slabs.forEach((m, i) => {
       const T = target(i, prog);
       const fl = 1 - Math.min(1, Math.max(0, intro * 1.4 - i * .07));
       m.position.x += (T.p[0] - m.position.x) * .07;
-      m.position.y += (T.p[1] - fl * 9 - m.position.y) * .07;
+      if (!snapped) m.position.set(T.p[0], T.p[1], T.p[2]);
+      m.position.y += (T.p[1] - m.position.y) * .07;
       m.position.z += (T.p[2] - m.position.z) * .07;
       let ry = T.r[1] + mx * .25, rx = T.r[0];
       if (flip && flip.i === i) {
@@ -122,8 +124,9 @@ export async function createScene(canvas, { stones, mobile }) {
       m.rotation.x += (rx - m.rotation.x) * .08;
       m.rotation.y += dy * .12;
       m.rotation.z += (T.r[2] - m.rotation.z) * .07;
-      const sc = m.scale.x + (T.s - m.scale.x) * .07; m.scale.setScalar(sc);
+      const ts = T.s * (1 - fl); const sc = snapped ? m.scale.x + (ts - m.scale.x) * .12 : 0.001; m.scale.setScalar(Math.max(.001, sc));
     });
+    snapped = true;
     // taş isimleri: her plakanın alt kenarının ekran konumuna yerleştir
     if (labelEls) {
       const W = innerWidth, H = innerHeight;
