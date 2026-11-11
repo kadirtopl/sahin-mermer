@@ -55,21 +55,21 @@ export async function createScene(canvas, { stones, mobile }) {
   // 0 = dönen 3D halka: tüm taşlar yuvarlak bir çember üzerinde, her biri farklı salınımla
   // 0 = dönen 3D halka · 1 = halka aşağı iner · 2 = tamamen aşağıda, ekrandan çıkar
   let spin = 0, tNow = 0, scrollSpin = 0;
-  const RING = mobile ? { cx: 0, cy: 3.15, cz: -2.4, R: 2.3, s: .46 } : { cx: 2.7, cy: .15, cz: -1.6, R: 2.9, s: .66 };
+  const RING = mobile ? { cx: 0, cy: 0, cz: -2.4, R: 2.2, s: .4 } : { cx: 2.7, cy: .15, cz: -1.6, R: 2.9, s: .66 };
+  // kamera halkayla aynı yükseklikte: bütün taşlar tek hizada görünür; mobilde görüntü yukarı kaydırılır
+  const OFF = mobile ? .3 : 0;
+  const view = () => { if (OFF) camera.setViewOffset(innerWidth, innerHeight, 0, innerHeight * OFF, innerWidth, innerHeight); else camera.clearViewOffset(); };
+  view();
   const ring = (i, dy, sMul, tilt) => {
     const a = i / N * Math.PI * 2 + spin + scrollSpin;
-    const wave = Math.sin(a * 2 + tNow * .9 + i) * (mobile ? .28 : .35);
+    const wave = 0;
     return {
       p: [RING.cx + Math.sin(a) * RING.R, RING.cy + wave + dy - i * tilt * .25, RING.cz + Math.cos(a) * RING.R],
-      r: [Math.sin(tNow * .5 + i * 1.7) * .16 + tilt, a, Math.sin(tNow * .7 + i * 2.3) * .14],
+      r: [0, a, 0],
       s: RING.s * sMul * (1 + Math.cos(a) * .12),
     };
   };
-  const K = [
-    i => ring(i, 0, 1, 0),
-    i => ring(i, mobile ? -5.2 : -4.2, 1.05, .35),
-    i => ring(i, -14, 1.1, .9),
-  ];
+  const K = [i => ring(i, 0, 1, 0)];
 
   let prog = 0, active = true, mx = 0, my = 0, flip = null, hero = 0, dragV = 0, lastFlip = 0, labelEls = null;
   const tmpV = new THREE.Vector3();
@@ -77,11 +77,13 @@ export async function createScene(canvas, { stones, mobile }) {
   // parmakla / fareyle yatay sürükleyince halka döner
   let lx = null;
   const hero$ = document.querySelector('.hero');
-  hero$ && hero$.addEventListener('pointerdown', e => { lx = e.clientX; });
-  addEventListener('pointermove', e => { if (lx === null) return; dragV += (e.clientX - lx) * .0009; lx = e.clientX; });
+  let onDrag = null;
+  const inRing = (x, y, el) => !(el && el.closest && el.closest('a,button')) && (mobile ? y < innerHeight * .52 : x > innerWidth * .42);
+  hero$ && hero$.addEventListener('pointerdown', e => { if (e.pointerType !== 'touch' && inRing(e.clientX, e.clientY, e.target)) lx = e.clientX; });
+  addEventListener('pointermove', e => { if (lx === null || e.pointerType === 'touch') return; dragV += (e.clientX - lx) * .0009; lx = e.clientX; onDrag && onDrag(); });
   addEventListener('pointerup', () => { lx = null; }); addEventListener('pointercancel', () => { lx = null; });
-  hero$ && hero$.addEventListener('touchstart', e => { lx = e.touches[0].clientX; }, { passive: true });
-  hero$ && hero$.addEventListener('touchmove', e => { if (lx === null) return; dragV += (e.touches[0].clientX - lx) * .0012; lx = e.touches[0].clientX; }, { passive: true });
+  hero$ && hero$.addEventListener('touchstart', e => { const t = e.touches[0]; lx = inRing(t.clientX, t.clientY, e.target) ? t.clientX : null; }, { passive: true });
+  hero$ && hero$.addEventListener('touchmove', e => { if (lx === null) return; dragV += (e.touches[0].clientX - lx) * .0012; lx = e.touches[0].clientX; onDrag && onDrag(); }, { passive: true });
   hero$ && hero$.addEventListener('touchend', () => { lx = null; });
 
   function target(i, s) {
@@ -97,18 +99,18 @@ export async function createScene(canvas, { stones, mobile }) {
     const t = clock.getElapsedTime(), dt = Math.min(.05, t - tNow);
     tNow = t;
     dragV *= .94;
-    spin += dt * .32 + dragV;
+    spin += dragV;
     // her 4 saniyede bir taş kendi ekseninde takla atar
-    if (!flip && t - lastFlip > 4) { lastFlip = t; const k = (Math.random() * N) | 0; flip = { i: k, t0: performance.now(), swapped: true, axis: Math.random() < .5 ? 'x' : 'y' }; }
+    if (false) { lastFlip = t; const k = (Math.random() * N) | 0; flip = { i: k, t0: performance.now(), swapped: true, axis: Math.random() < .5 ? 'x' : 'y' }; }
     hero = Math.min(1, hero + .012);                 // intro fly-in
     const intro = smooth(hero);
     slabs.forEach((m, i) => {
       const T = target(i, prog);
       const fl = 1 - Math.min(1, Math.max(0, intro * 1.4 - i * .07));
       m.position.x += (T.p[0] - m.position.x) * .07;
-      m.position.y += (T.p[1] - fl * 9 + Math.sin(t * .8 + i) * .06 - m.position.y) * .07;
+      m.position.y += (T.p[1] - fl * 9 - m.position.y) * .07;
       m.position.z += (T.p[2] - m.position.z) * .07;
-      let ry = T.r[1] + mx * .25, rx = T.r[0] + my * .15;
+      let ry = T.r[1] + mx * .25, rx = T.r[0];
       if (flip && flip.i === i) {
         const ft = Math.min(1, (performance.now() - flip.t0) / 1300);
         if (flip.axis === 'x') rx += smooth(ft) * Math.PI * 2; else ry += smooth(ft) * Math.PI * 2;
@@ -136,23 +138,25 @@ export async function createScene(canvas, { stones, mobile }) {
         el.style.zIndex = Math.round((front + 1) * 10);
       });
     }
-    dust.rotation.y = t * .02; dust.position.y = -prog * 2;
+    dust.rotation.y = t * .02;
     camera.position.x += (mx * .6 - camera.position.x) * .04;
-    camera.position.y += (-my * .4 - camera.position.y) * .04;
-    camera.lookAt(0, 0, 0);
+    camera.position.y = RING.cy;
+    camera.lookAt(0, RING.cy, 0);
     renderer.render(scene, camera);
   }
   frame();
 
   addEventListener('resize', () => {
-    camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+    camera.aspect = innerWidth / innerHeight; view(); camera.updateProjectionMatrix();
     renderer.setSize(innerWidth, innerHeight, false);
   });
 
   return {
-    setProgress(s, turn = 0) { prog = s; scrollSpin = turn * Math.PI * 2; },
+    setProgress() {},
+    nudge(dy) { dragV += Math.max(-.03, Math.min(.03, dy * .00045)); },
+    onDrag(fn) { onDrag = fn; },
     setLabels(els) { labelEls = els; },
     setActive(v) { active = v; },
-    setStone(id) { const k = stones.indexOf(id); if (k >= 0) { flip = { i: k, t0: performance.now(), swapped: true, axis: 'y' }; lastFlip = tNow; } },
+    setStone() {},
   };
 }

@@ -540,3 +540,27 @@ main,.foot{position:relative;z-index:1}
 .serr__t b{display:block;font-family:var(--serif);font-weight:500;font-size:20px}
 .serr__t small{font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
 .serr__go{color:var(--gold);font-size:18px}
+
+/* ================= v6: sabit halka, kaydırma ipucu, sayaç ================= */
+.hero{height:100svh}
+.hero__pin{position:relative;--drop:0!important}
+.hero__pin::before,.hero__pin .hero__inner,.hero__pin .scrollcue{opacity:1;transform:none}
+#stage{will-change:transform;transition:opacity .4s}
+.swipe-hint{flex-direction:row!important;position:absolute;z-index:3;left:50%;top:37svh;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;opacity:0;transition:opacity .8s var(--ease)}
+.swipe-hint.on{opacity:1}
+@media (min-width:721px){.swipe-hint{left:auto;right:16%;top:auto;bottom:16svh;transform:none}}
+.swipe-hint__track{position:relative;display:flex;align-items:center;justify-content:space-between;width:132px;height:44px;padding:0 12px;border-radius:999px;background:rgba(11,10,9,.55);border:1px solid rgba(217,183,122,.35);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.swipe-hint__track i{font-style:normal;color:var(--gold);font-size:22px;line-height:1;opacity:.8}
+.swipe-hint__f{position:absolute;left:50%;top:50%;width:28px;height:28px;margin:-14px 0 0 -14px;animation:swipe 2.2s var(--ease) infinite}
+.swipe-hint__f svg{width:100%;height:100%;fill:none;stroke:#f4efe6;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 2px 6px rgba(0,0,0,.6))}
+@keyframes swipe{0%,100%{transform:translateX(-26px) rotate(-8deg)}50%{transform:translateX(26px) rotate(8deg)}}
+.swipe-hint small{font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--stone);text-shadow:0 1px 6px rgba(0,0,0,.8)}
+.nav-camp{font-style:normal;font-family:var(--sans);font-weight:700;font-variant-numeric:tabular-nums;color:#7a1f12;margin-left:4px}
+.mbar button{display:flex;align-items:center;justify-content:center;gap:10px}
+.mbar__t{font-size:12.5px;font-weight:600;padding:3px 9px;border-radius:999px;background:rgba(26,20,11,.14)}
+.mbar__t b,.campT{font-variant-numeric:tabular-nums}
+.wm__camp{margin:12px auto 0;display:inline-block;font-size:13.5px;padding:7px 14px;border-radius:999px;background:rgba(217,183,122,.12);border:1px solid rgba(217,183,122,.35);color:var(--text)}
+.wm__camp b{color:var(--gold);font-size:15px;margin-left:4px}
+
+.swipe-hint{flex-direction:row;gap:10px}.swipe-hint__track{width:110px;height:38px}
+@media (max-width:720px){.hero__pin{padding-bottom:96px}}

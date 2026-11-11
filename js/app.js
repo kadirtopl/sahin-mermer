@@ -78,21 +78,21 @@ $$('video.autoplay').forEach(v => vio.observe(v));
 
 /* ---------------- scroll loop ---------------- */
 let scene = null;
+let lastSY = 0;
 function onScroll() {
   const y = window.scrollY;
   onNav(y);
   if (scene) {
-    // açılış sabit kalır: kaydırma boyunca halka tam tur döner, son %22'de taşlar aşağı iner
-    const heroH = $('.hero').offsetHeight, vh = innerHeight, run = Math.max(1, heroH - vh);
-    const p = Math.min(1, Math.max(0, y / run));
-    const after = Math.max(0, (y - run) / vh);
-    const s = p < .78 ? 0 : (p - .78) / .22 + Math.min(1, after);
-    scene.setProgress(Math.min(2, s), p);
-    $('.hero__pin').style.setProperty('--drop', Math.min(1, Math.max(0, (p - .74) / .2)).toFixed(3));
-    const visible = y < heroH + vh * .3;
-    $('#stage').style.opacity = visible ? 1 : 0;
+    // halka yerinde durur, sayfayla birlikte yukarı kayar; kaydırınca hafifçe döner
+    const heroH = $('.hero').offsetHeight;
+    scene.nudge(y - lastSY);
+    const st = $('#stage');
+    st.style.transform = `translate3d(0,${-Math.min(y, heroH)}px,0)`;
+    const visible = y < heroH;
+    st.style.opacity = visible ? 1 : 0;
     scene.setActive(visible);
   }
+  lastSY = y;
 }
 lenis ? lenis.on('scroll', onScroll) : addEventListener('scroll', onScroll, { passive: true });
 addEventListener('resize', onScroll);
@@ -383,10 +383,6 @@ function showWin(won, fresh) {
   $('#wmPicked').innerHTML = s ? `<i style="background-image:url(${s.sw})"></i><span>Seçtiğin taş: <b>${s.name}</b> · ${lineName(s)}</span>` : '';
   const a = $('#winWa'); a.href = waLink(waMessage(won.prize));
   a.onclick = () => track('Contact', { content_name: won.prize });
-  clearInterval(timerInt);
-  const end = won.at + PRIZE_HOURS * 3600e3;
-  const upd = () => { const d = Math.max(0, end - Date.now()); const h = Math.floor(d / 3600e3), m = Math.floor(d / 6e4) % 60, sec = Math.floor(d / 1e3) % 60; $('#winTimer').textContent = [h, m, sec].map(v => String(v).padStart(2, '0')).join(':'); };
-  upd(); timerInt = setInterval(upd, 1000);
   if (fresh) confetti();
 }
 function confetti() {
@@ -401,6 +397,20 @@ function confetti() {
     if (++f < 200) requestAnimationFrame(loop); else ctx.clearRect(0, 0, cv.width, cv.height);
   })();
 }
+
+/* ================= KAMPANYA SAYACI ================= */
+const CAMP_MIN = 15;
+function campEnd() {
+  let e = store.get('camp');
+  if (!e || e - Date.now() <= 0) { e = Date.now() + CAMP_MIN * 60e3 - Math.floor(Math.random() * 90e3); store.set('camp', e); }
+  return e;
+}
+function tickCamp() {
+  const d = Math.max(0, campEnd() - Date.now());
+  const txt = `${String(Math.floor(d / 6e4)).padStart(2, '0')}:${String(Math.floor(d / 1e3) % 60).padStart(2, '0')}`;
+  $$('.campT').forEach(el => el.textContent = txt);
+}
+tickCamp(); setInterval(tickCamp, 1000);
 
 /* ================= BOOT ================= */
 $('#yr').textContent = new Date().getFullYear();
@@ -422,6 +432,8 @@ import('./scene.js').then(async ({ createScene }) => {
   const lab = $('#ringLabels');
   lab.innerHTML = ringStones.map(s => `<span>${s.name}</span>`).join('');
   scene.setLabels($$('span', lab));
+  const hint = $('#swipeHint'); hint.classList.add('on');
+  scene.onDrag(() => hint.classList.remove('on'));
   clearTimeout(failSafe); done(); onScroll();
 }).catch(err => { console.warn('3D devre dışı:', err); clearTimeout(failSafe); done(); $('#stage').style.background = `url(${ringStones[1].tx}) center/cover`; });
 
