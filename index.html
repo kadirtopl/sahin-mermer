@@ -61,10 +61,15 @@
 <!-- HERO -->
 <section class="hero" data-stage="hero">
  <div class="hero__pin">
-  <div class="ring-labels" id="ringLabels" aria-hidden="true"></div>
-  <div class="swipe-hint" id="swipeHint" aria-hidden="true">
-    <span class="swipe-hint__track"><i class="swipe-hint__l">‹</i><b class="swipe-hint__f"><svg viewBox="0 0 24 24"><path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V10m0-.5V4a1.5 1.5 0 0 1 3 0v6m0-1a1.5 1.5 0 0 1 3 0v4.5c0 3.6-2.4 6.5-6 6.5h-.6a6 6 0 0 1-4.6-2.2L4.3 14a1.5 1.5 0 0 1 2.3-1.9L9 14.5"/></svg></b><i class="swipe-hint__r">›</i></span>
-    <small>Parmağınla çevir</small>
+  <div class="h3d" id="h3d">
+    <div class="swipe-hint" id="swipeHint" aria-hidden="true">
+      <span class="swipe-hint__track"><i>‹</i><b class="swipe-hint__f"><svg viewBox="0 0 24 24"><path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V10m0-.5V4a1.5 1.5 0 0 1 3 0v6m0-1a1.5 1.5 0 0 1 3 0v4.5c0 3.6-2.4 6.5-6 6.5h-.6a6 6 0 0 1-4.6-2.2L4.3 14a1.5 1.5 0 0 1 2.3-1.9L9 14.5"/></svg></b><i>›</i></span>
+      <small>Çevir · telefonu eğ</small>
+    </div>
+    <div class="h3d__pick">
+      <div class="h3d__cap"><span class="h3d__k">Adada dene</span><button class="h3d__name" id="h3dName" type="button"></button></div>
+      <div class="h3d__chips" id="h3dChips" role="listbox" aria-label="Taş seç"></div>
+    </div>
   </div>
   <div class="hero__inner">
     <p class="eyebrow reveal"><span class="pulse"></span> İndirim çarkı · <span class="campT">15:00</span> kaldı</p>
@@ -73,9 +78,9 @@
       <span class="line"><span><em>akışkan</em> hâli.</span></span>
     </h1>
     <p class="hero__lead reveal">Kuvars ve porselen tezgah. Ölçü, kesim ve montaj bizden.</p>
-    <div class="hero__cta reveal">
-      <a href="#isler" class="btn btn--gold magnetic"><span>Ne Yaptıracaksınız? ↓</span></a>
-      <button class="btn btn--ghost magnetic" data-open-wheel><span>🎁 İndirim Çarkı</span></button>
+    <div class="hero__cta hero__cta--row reveal">
+      <a href="#isler" class="btn btn--gold magnetic"><span>Ne Yaptıracaksınız?</span></a>
+      <button class="btn btn--ghost magnetic" data-open-wheel><span>🎁 Çark</span></button>
     </div>
   </div>
   <div class="scrollcue" aria-hidden="true"><span></span>Kaydır</div>

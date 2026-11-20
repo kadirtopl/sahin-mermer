@@ -427,14 +427,27 @@ function done() {
 const failSafe = setTimeout(done, 4500);
 
 const ringStones = RING.map(stoneById).filter(Boolean);
+// açılıştaki adada denenecek taşlar
+let heroIdx = 0;
+function renderChips() {
+  $('#h3dChips').innerHTML = ringStones.map((s, i) => `<button class="h3d__chip ${i === heroIdx ? 'is-on' : ''}" data-hi="${i}" role="option" aria-selected="${i === heroIdx}" aria-label="${esc(s.name)}" style="background-image:url(${s.sw})"></button>`).join('');
+  const s = ringStones[heroIdx];
+  $('#h3dName').innerHTML = `${esc(s.name)} <small>${LINES[s.line].short}</small> <u>Gör →</u>`;
+}
+renderChips();
+$('#h3dChips').addEventListener('click', e => {
+  const b = e.target.closest('[data-hi]'); if (!b) return;
+  heroIdx = +b.dataset.hi; renderChips();
+  scene && scene.setStone(ringStones[heroIdx].tx);
+  $('#swipeHint').classList.remove('on');
+});
+$('#h3dName').addEventListener('click', () => openStone(ringStones[heroIdx].id));
 import('./scene.js').then(async ({ createScene }) => {
   scene = await createScene($('#stage'), { stones: ringStones.map(s => s.tx), mobile: innerWidth < 720 });
-  const lab = $('#ringLabels');
-  lab.innerHTML = ringStones.map(s => `<span>${s.name}</span>`).join('');
-  scene.setLabels($$('span', lab));
   const hint = $('#swipeHint'); hint.classList.add('on');
   scene.onDrag(() => hint.classList.remove('on'));
+  $('#h3d').classList.add('on');
   clearTimeout(failSafe); done(); onScroll();
-}).catch(err => { console.warn('3D devre dışı:', err); clearTimeout(failSafe); done(); $('#stage').style.background = `url(${ringStones[1].tx}) center/cover`; });
+}).catch(err => { console.warn('3D devre dışı:', err); clearTimeout(failSafe); done(); $('#stage').style.background = `url(assets/cat/sahne/${ringStones[0].id}.webp) center 20%/cover`; $('#h3d').classList.add('on'); });
 
 onScroll();
