@@ -24,12 +24,12 @@ export async function createScene(canvas, { stones, mobile }) {
 
   const camera = new THREE.PerspectiveCamera(mobile ? 34 : 30, innerWidth / innerHeight, 0.1, 60);
   // mobilde ada ekranın üst kısmında durur, metin altta kalır
-  const OFF = mobile ? .235 : 0;
+  const OFF = mobile ? .265 : 0;
   const view = () => { if (OFF) camera.setViewOffset(innerWidth, innerHeight, 0, innerHeight * OFF, innerWidth, innerHeight); else camera.clearViewOffset(); camera.updateProjectionMatrix(); };
   // ekran ne kadar darsa kamera o kadar uzakta: ada her telefonda ekrana sığar
   const CAM = { x: 0, y: 2, z: 8, ly: .62 };
   const fit = () => {
-    const span = mobile ? 3.9 : 4.6, fh = Math.tan(camera.fov * Math.PI / 360);
+    const span = mobile ? 4.25 : 4.8, fh = Math.tan(camera.fov * Math.PI / 360);
     CAM.z = Math.max(mobile ? 7.6 : 11.5, span / (2 * fh * camera.aspect));
     CAM.y = .55 + CAM.z * .3;
   };
@@ -37,14 +37,14 @@ export async function createScene(canvas, { stones, mobile }) {
 
   // ışıklar: sıcak ana ışık gölgeli, altın kontra ışık, yumuşak dolgu
   const key = new THREE.DirectionalLight(0xfff0db, 2.4);
-  key.position.set(3.5, 6, 4);
+  key.position.set(1.2, 7.5, 2.2);
   key.castShadow = true;
   key.shadow.mapSize.set(mobile ? 1024 : 2048, mobile ? 1024 : 2048);
   Object.assign(key.shadow.camera, { left: -3, right: 3, top: 3, bottom: -3, near: 1, far: 15 });
-  key.shadow.radius = 6; key.shadow.bias = -0.0004;
+  key.shadow.radius = 10; key.shadow.bias = -0.0004;
   scene.add(key);
   const rim = new THREE.DirectionalLight(0xd9b77a, 1.5); rim.position.set(-5, 2.5, -4); scene.add(rim);
-  scene.add(new THREE.HemisphereLight(0xfff6ea, 0x1a1612, .45));
+  scene.add(new THREE.HemisphereLight(0xfff6ea, 0x8a7a66, .7));
 
   // doku yükleyici
   const loader = new THREE.TextureLoader();
@@ -125,8 +125,17 @@ export async function createScene(canvas, { stones, mobile }) {
   const lamps = new THREE.Group(); lamps.add(lamp(-.7), lamp(.7)); island.add(lamps);
 
   // zemin: sadece gölge + altın tonlu yumuşak hale (kenarlar arka plana karışır)
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), new THREE.ShadowMaterial({ opacity: .5 }));
-  floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; root.add(floor);
+  // parlak kaide + altın kenar: ada sahnede bir mücevher gibi dursun
+  const PR = 1.85;
+  const podium = new THREE.Mesh(new THREE.CylinderGeometry(PR, PR + .04, .07, 128),
+    new THREE.MeshPhysicalMaterial({ color: 0xf6f1ea, roughness: .22, clearcoat: 1, clearcoatRoughness: .08, envMapIntensity: 1 }));
+  podium.position.y = -.035; podium.receiveShadow = true; root.add(podium);
+  const rimGold = new THREE.Mesh(new THREE.TorusGeometry(PR + .02, .022, 16, 160), brass);
+  rimGold.rotation.x = Math.PI / 2; rimGold.position.y = 0; root.add(rimGold);
+  const rimGold2 = new THREE.Mesh(new THREE.TorusGeometry(PR + .045, .008, 8, 160), brass);
+  rimGold2.rotation.x = Math.PI / 2; rimGold2.position.y = -.07; root.add(rimGold2);
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), new THREE.ShadowMaterial({ opacity: .16 }));
+  floor.rotation.x = -Math.PI / 2; floor.position.y = -.075; floor.receiveShadow = true; root.add(floor);
   const gc = document.createElement('canvas'); gc.width = gc.height = 256;
   const gx = gc.getContext('2d'), grd = gx.createRadialGradient(128, 128, 0, 128, 128, 128);
   grd.addColorStop(0, 'rgba(217,183,122,.30)'); grd.addColorStop(.45, 'rgba(217,183,122,.08)'); grd.addColorStop(1, 'rgba(217,183,122,0)');

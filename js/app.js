@@ -442,7 +442,7 @@ $('#h3dChips').addEventListener('click', e => {
   $('#swipeHint').classList.remove('on');
 });
 $('#h3dName').addEventListener('click', () => openStone(ringStones[heroIdx].id));
-import('./scene.js').then(async ({ createScene }) => {
+import('./scene.js?v=8b').then(async ({ createScene }) => {
   scene = await createScene($('#stage'), { stones: ringStones.map(s => s.tx), mobile: innerWidth < 720 });
   const hint = $('#swipeHint'); hint.classList.add('on');
   scene.onDrag(() => hint.classList.remove('on'));
