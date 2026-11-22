@@ -11,13 +11,13 @@
 <meta property="og:image" content="assets/img/mutfak-siyah.webp">
 <meta name="apple-mobile-web-app-title" content="Şahin Mermer">
 <meta property="og:type" content="website">
-<link rel="icon" type="image/svg+xml" href="assets/logo-mark.svg">
-<link rel="apple-touch-icon" href="assets/logo-180.png">
+<link rel="icon" type="image/png" href="assets/favicon-64.png">
+<link rel="apple-touch-icon" href="assets/logo-180.png?v=10">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="css/style.css?v=8">
+<link rel="stylesheet" href="css/style.css?v=10">
 <script>try{history.scrollRestoration="manual"}catch(e){}</script>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"HomeAndConstructionBusiness","name":"Şahin Mermer Granit","founder":"Muhammet Ali Şahin","telephone":"+90 546 599 46 69","description":"Mutfak tezgahı, banyo lavabo, ada, oniks ve ticari tezgah; mermer, granit, kuvars ve porselen uygulama.","priceRange":"₺₺"}
@@ -34,7 +34,7 @@
     <path d="M0 140 C 80 120, 120 60, 200 80 S 320 160, 400 100 S 520 40, 600 70" />
     <path d="M60 200 C 120 150, 160 150, 230 120 S 330 60, 420 150" />
   </svg>
-  <div class="loader__brand"><img src="assets/logo-mark.svg" alt="" width="92" height="92">ŞAHİN<span>mermer · granit</span></div>
+  <div class="loader__brand"><img class="loader__logo" src="assets/logo-yazi-1040.webp" alt="Şahin Mermer" width="340" height="112"></div>
   <div class="loader__pct"><span id="loaderPct">0</span>%</div>
 </div>
 
@@ -45,8 +45,7 @@
 <!-- NAV -->
 <header class="nav" id="nav">
   <a href="#top" class="nav__logo" aria-label="Şahin Mermer Granit">
-    <img class="nav__mark" src="assets/logo-mark.svg" alt="" width="44" height="44">
-    <span class="nav__name">ŞAHİN<small>Mermer · Granit</small></span>
+    <img class="nav__logo-img" src="assets/logo-yazi-520.webp" srcset="assets/logo-yazi-520.webp 520w, assets/logo-yazi-1040.webp 1040w" sizes="150px" alt="Şahin Mermer" width="150" height="50">
   </a>
   <nav class="nav__links">
     <a href="#isler">Yapılan İşler</a>
@@ -64,10 +63,12 @@
   <div class="h3d" id="h3d">
     <div class="swipe-hint" id="swipeHint" aria-hidden="true">
       <span class="swipe-hint__track"><i>‹</i><b class="swipe-hint__f"><svg viewBox="0 0 24 24"><path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V10m0-.5V4a1.5 1.5 0 0 1 3 0v6m0-1a1.5 1.5 0 0 1 3 0v4.5c0 3.6-2.4 6.5-6 6.5h-.6a6 6 0 0 1-4.6-2.2L4.3 14a1.5 1.5 0 0 1 2.3-1.9L9 14.5"/></svg></b><i>›</i></span>
-      <small>Çevir · telefonu eğ</small>
+      <small>Mutfakta gezin · telefonu eğ</small>
     </div>
+    <button class="h3d__lights" id="h3dLights" type="button" aria-pressed="false"><span class="h3d__sw" aria-hidden="true"><i></i></span><b>LED</b></button>
+    <div class="h3d__toast" id="h3dToast" role="status" aria-live="polite"></div>
     <div class="h3d__pick">
-      <div class="h3d__cap"><span class="h3d__k">Adada dene</span><button class="h3d__name" id="h3dName" type="button"></button></div>
+      <div class="h3d__cap"><span class="h3d__k">Mutfağında dene</span><button class="h3d__name" id="h3dName" type="button"></button></div>
       <div class="h3d__chips" id="h3dChips" role="listbox" aria-label="Taş seç"></div>
     </div>
   </div>
@@ -146,7 +147,7 @@
 </main>
 
 <footer class="foot">
-  <div class="foot__brand"><img src="assets/logo-mark.svg" alt="" width="56" height="56"><span>ŞAHİN</span><small>Mermer &amp; Granit</small></div>
+  <div class="foot__brand"><img class="foot__rozet" src="assets/logo-rozet.webp" alt="" width="96" height="96"><img class="foot__yazi" src="assets/logo-yazi-520.webp" alt="Şahin Mermer" width="190" height="63"></div>
   <div class="foot__info">
     <span>Muhammet Ali Şahin</span>
     <a href="tel:+905465994669">0546 599 46 69</a>
@@ -239,6 +240,6 @@
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
 </script>
-<script type="module" src="js/app.js?v=8"></script>
+<script type="module" src="js/app.js?v=10"></script>
 </body>
 </html>

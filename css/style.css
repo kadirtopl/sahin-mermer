@@ -649,3 +649,71 @@ body{background:
 .loader{background:#f7f2ea}
 .loader__vein path+path{stroke:#c8b9a2}
 .pal__top{background:rgba(255,253,249,.92)}
+
+/* ================= v9: gerçekçi 3D mutfak — çipler, bildirim ================= */
+.h3d__pick{gap:8px}
+.h3d__chips{gap:6px;padding:8px 14px 6px}
+.h3d__chip{width:auto;height:auto;border:0;border-radius:14px;background:none;box-shadow:none;display:flex;flex-direction:column;align-items:center;gap:5px;padding:4px 4px 2px;min-width:58px;transform:none}
+.h3d__chip:hover{transform:none}
+.h3d__chip i{display:block;width:42px;height:42px;border-radius:50%;background-size:cover;background-position:center;border:2px solid #fff;box-shadow:0 8px 18px -8px rgba(60,40,20,.6);transition:transform .45s var(--ease),box-shadow .3s,border-color .3s}
+.h3d__chip span{font-size:10.5px;font-weight:600;letter-spacing:.02em;color:rgba(29,25,21,.7);white-space:nowrap;transition:color .3s}
+.h3d__chip.is-on{transform:none;box-shadow:none}
+.h3d__chip.is-on i{transform:scale(1.12);border-color:var(--gold-2);box-shadow:0 0 0 3px rgba(185,143,87,.32),0 12px 24px -10px rgba(154,114,64,.7)}
+.h3d__chip.is-on span{color:var(--accent)}
+.h3d__pick{background:linear-gradient(180deg,rgba(247,242,234,0),rgba(247,242,234,.78) 34%,rgba(247,242,234,.9));padding-top:14px}
+.h3d__toast{position:absolute;left:50%;top:calc(38.5svh - 54px);transform:translate(-50%,12px);display:flex;align-items:center;gap:10px;padding:8px 8px 8px 16px;border-radius:999px;background:rgba(255,253,249,.94);border:1px solid rgba(154,114,64,.3);box-shadow:0 16px 40px -18px rgba(60,40,20,.55);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .45s var(--ease),transform .55s var(--ease);z-index:4}
+.h3d__toast.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.h3d__toast b{font-size:13px;font-weight:600;color:var(--text)}
+.h3d__toast button{height:34px;padding:0 14px;border-radius:999px;font-size:12.5px;font-weight:700;color:#1a140b;background:linear-gradient(120deg,#f1d9a7,var(--gold) 45%,#a9824f)}
+@media (min-width:721px){.h3d__toast{left:auto;right:var(--gut);top:auto;bottom:calc(9svh + 120px);transform:translateY(12px)}.h3d__toast.on{transform:none}.h3d__pick{background:none}}
+/* v9 mobil yerleşim: 3D üst %60, çipler ortada, yazı altta */
+@media (max-width:720px){
+  .h3d__pick{top:47svh}
+  .h3d .swipe-hint{top:calc(47svh - 52px)}
+  .h3d__toast{top:calc(47svh - 56px)}
+  .hero__lead{display:none}
+  .hero__title{font-size:clamp(42px,12vw,56px);margin:8px 0 6px}
+  .hero__pin::before{background:linear-gradient(0deg,#f7f2ea 36%,rgba(247,242,234,.9) 41%,rgba(247,242,234,0) 47%) !important}
+}
+body{background:var(--ink) !important}
+
+/* LED ışık düğmesi */
+.h3d__lights{position:absolute;right:14px;top:84px;z-index:4;display:none;align-items:center;gap:9px;height:40px;padding:0 14px 0 8px;border-radius:999px;background:rgba(255,253,249,.88);border:1px solid rgba(154,114,64,.3);box-shadow:0 10px 26px -14px rgba(40,30,20,.6);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);pointer-events:auto;transition:background .5s,color .5s,border-color .5s,box-shadow .5s}
+.h3d__lights.ready{display:flex}
+.h3d__lights b{font-size:12.5px;font-weight:700;color:var(--text);transition:color .5s}
+.h3d__sw{position:relative;width:36px;height:22px;border-radius:999px;background:#d9d0c3;box-shadow:inset 0 1px 3px rgba(0,0,0,.2);transition:background .5s}
+.h3d__sw i{position:absolute;left:3px;top:3px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.3);transition:transform .45s var(--ease),background .45s,box-shadow .45s}
+.h3d__lights.is-on{background:rgba(32,25,18,.82);border-color:rgba(255,201,133,.55);box-shadow:0 0 0 1px rgba(255,201,133,.25),0 12px 30px -10px rgba(255,180,90,.55)}
+.h3d__lights.is-on b{color:#ffe3b8}
+.h3d__lights.is-on .h3d__sw{background:linear-gradient(90deg,#f1d9a7,#ffb85c)}
+.h3d__lights.is-on .h3d__sw i{transform:translateX(14px);background:#fffaf0;box-shadow:0 0 10px 2px rgba(255,201,133,.9)}
+@media (min-width:721px){.h3d__lights{top:96px;right:var(--gut)}}
+@media (max-width:720px){
+  .h3d__k{display:none}
+  .h3d__cap{white-space:nowrap}
+  .h3d__name{font-size:19px}
+}
+
+/* ================= v10: marka logosu + neon ================= */
+.nav__logo{gap:0}
+.nav__logo-img{display:block;height:46px;width:auto;filter:drop-shadow(0 0 7px rgba(255,190,110,.55)) drop-shadow(0 0 2px rgba(255,214,160,.6));animation:navNeon 5s ease-in-out infinite}
+@keyframes navNeon{0%,100%{filter:drop-shadow(0 0 6px rgba(255,190,110,.45)) drop-shadow(0 0 2px rgba(255,214,160,.5))}50%{filter:drop-shadow(0 0 11px rgba(255,190,110,.7)) drop-shadow(0 0 3px rgba(255,214,160,.75))}}
+@media (max-width:720px){.nav__logo-img{height:40px}}
+/* açılış: logo neon tabela gibi titreyerek yanar */
+.loader__brand{font-size:0;letter-spacing:0}
+.loader__logo{display:block;width:min(340px,74vw);height:auto;margin:0 auto;border-radius:0;animation:neonOn 1.9s steps(1,end) .25s both, neonHum 3.2s ease-in-out 2.2s infinite}
+@keyframes neonOn{
+  0%{opacity:.18;filter:none}
+  6%{opacity:1;filter:drop-shadow(0 0 14px rgba(255,190,110,.95)) drop-shadow(0 0 3px #ffe3b8)}
+  11%{opacity:.25;filter:none}
+  24%{opacity:.25;filter:none}
+  28%{opacity:1;filter:drop-shadow(0 0 16px rgba(255,190,110,.95)) drop-shadow(0 0 3px #ffe3b8)}
+  33%{opacity:.4;filter:drop-shadow(0 0 4px rgba(255,190,110,.4))}
+  47%,100%{opacity:1;filter:drop-shadow(0 0 18px rgba(255,190,110,.9)) drop-shadow(0 0 4px #ffe3b8)}
+}
+@keyframes neonHum{0%,100%{filter:drop-shadow(0 0 16px rgba(255,190,110,.8)) drop-shadow(0 0 3px #ffe3b8)}50%{filter:drop-shadow(0 0 24px rgba(255,190,110,1)) drop-shadow(0 0 5px #fff1d8)}}
+.foot__brand{display:flex;flex-direction:column;align-items:center;gap:12px}
+.foot__rozet{width:96px;height:96px;border-radius:50%;box-shadow:0 14px 30px -14px rgba(60,40,20,.6)}
+.foot__yazi{width:190px;height:auto;filter:drop-shadow(0 0 8px rgba(255,190,110,.5))}
+/* LED düğmesi telefonda küçük: tabelaya değmesin */
+@media (max-width:720px){.h3d__lights{top:auto;bottom:calc(53svh + 56px);right:12px;height:36px;padding:0 12px 0 6px;gap:7px}.h3d__lights b{font-size:12px}}

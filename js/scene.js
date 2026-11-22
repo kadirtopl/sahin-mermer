@@ -1,179 +1,328 @@
 import * as THREE from 'three';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { createStudioEnvironment, createContactShadowTexture, createGlowTexture } from './s3d/env.js?v=10';
+import { oakFloorTexture, walnutTexture, plasterTexture, brushedBrassTexture } from './s3d/textures.js?v=10';
+import { createStoneMaterial, setStoneMap, wipeStones } from './s3d/stoneMat.js?v=10';
 
-// Açılıştaki 3D waterfall mutfak adası.
-// Parmakla sağa-sola sürükleyince döner, telefon eğilince hafifçe döner (jiroskop),
-// sayfa kaydırılınca küçük bir dönüş yapar. Taş çipine dokununca ada o taşa bürünür.
+// Açılıştaki gerçekçi 3D mutfak.
+// - Açılışta kamera cilalı taşın yüzeyine çok yakından başlar, geri çekilerek mutfağın tamamını gösterir.
+// - Parmakla sağa-sola kaydırınca mutfağın etrafında gezinir; telefon eğilince bakış açısı hafifçe kayar.
+// - Taş seçilince yeni taş, ışıklı bir çizgiyle bütün tezgah ve arka panele yayılır.
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-const ease = t => 1 - Math.pow(1 - t, 3);
+const easeIO = t => (t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+const lerp = (a, b, t) => a + (b - a) * t;
 
 export async function createScene(canvas, { stones, mobile }) {
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, mobile ? 2 : 2));
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, mobile ? 1.75 : 2));
   renderer.setSize(innerWidth, innerHeight, false);
+  renderer.setClearColor(0xf7f2ea, 1);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.08;
+  renderer.toneMappingExposure = 1.0;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  const maxAniso = renderer.capabilities.getMaxAnisotropy();
 
   const scene = new THREE.Scene();
-  const pmrem = new THREE.PMREMGenerator(renderer);
-  scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.03).texture;
+  scene.environment = createStudioEnvironment(renderer, { intensity: 1 });
 
-  const camera = new THREE.PerspectiveCamera(mobile ? 34 : 30, innerWidth / innerHeight, 0.1, 60);
-  // mobilde ada ekranın üst kısmında durur, metin altta kalır
-  const OFF = mobile ? .265 : 0;
-  const view = () => { if (OFF) camera.setViewOffset(innerWidth, innerHeight, 0, innerHeight * OFF, innerWidth, innerHeight); else camera.clearViewOffset(); camera.updateProjectionMatrix(); };
-  // ekran ne kadar darsa kamera o kadar uzakta: ada her telefonda ekrana sığar
-  const CAM = { x: 0, y: 2, z: 8, ly: .62 };
-  const fit = () => {
-    const span = mobile ? 4.25 : 4.8, fh = Math.tan(camera.fov * Math.PI / 360);
-    CAM.z = Math.max(mobile ? 7.6 : 11.5, span / (2 * fh * camera.aspect));
-    CAM.y = .55 + CAM.z * .3;
+  // ---------------- kamera ve çerçeve ----------------
+  // Mobilde 3D ekranın üst %60'ında çizilir; altta yazılar ve butonlar durur.
+  const K = mobile ? .6 : 1;
+  const camera = new THREE.PerspectiveCamera(50, 1, .05, 40);
+  const HF = mobile ? 54 : 52;                       // yatay görüş açısı (derece)
+  const frame = () => {
+    const w = innerWidth, h = innerHeight * K;
+    camera.aspect = w / h;
+    camera.fov = clamp(2 * Math.atan(Math.tan(HF * Math.PI / 360) / camera.aspect) * 180 / Math.PI, 28, 70);
+    // masaüstünde mutfak sağa kayar, sol taraf yazıya kalır
+    if (!mobile) camera.setViewOffset(w, h, -w * .17, 0, w, h); else camera.clearViewOffset();
+    camera.updateProjectionMatrix();
   };
-  fit(); camera.position.set(CAM.x, CAM.y, CAM.z); camera.far = CAM.z * 4; view();
+  frame();
+  const TARGET = new THREE.Vector3(0, .78, -.15);
+  const REST = { r: mobile ? 4.55 : 4.9, pitch: .27 };
 
-  // ışıklar: sıcak ana ışık gölgeli, altın kontra ışık, yumuşak dolgu
-  const key = new THREE.DirectionalLight(0xfff0db, 2.4);
-  key.position.set(1.2, 7.5, 2.2);
-  key.castShadow = true;
-  key.shadow.mapSize.set(mobile ? 1024 : 2048, mobile ? 1024 : 2048);
-  Object.assign(key.shadow.camera, { left: -3, right: 3, top: 3, bottom: -3, near: 1, far: 15 });
-  key.shadow.radius = 10; key.shadow.bias = -0.0004;
-  scene.add(key);
-  const rim = new THREE.DirectionalLight(0xd9b77a, 1.5); rim.position.set(-5, 2.5, -4); scene.add(rim);
-  scene.add(new THREE.HemisphereLight(0xfff6ea, 0x8a7a66, .7));
+  // ---------------- ışık ----------------
+  // pencereden gelen gün ışığı (gölgeli) + ortam yansımaları (env) + sarkıt lambalar
+  const sun = new THREE.DirectionalLight(0xfff3e2, 2.6);
+  sun.position.set(-5.5, 4.6, 2.2);
+  sun.target.position.set(.3, 0, -.4);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(mobile ? 1024 : 2048, mobile ? 1024 : 2048);
+  Object.assign(sun.shadow.camera, { left: -4, right: 4, top: 3.5, bottom: -2.5, near: .5, far: 16 });
+  sun.shadow.radius = 5; sun.shadow.bias = -.0005; sun.shadow.normalBias = .02;
+  scene.add(sun, sun.target);
+  const hemi = new THREE.HemisphereLight(0xfff8f0, 0xb9a88f, .35);
+  scene.add(hemi);
 
-  // doku yükleyici
+  // ---------------- dokular ----------------
   const loader = new THREE.TextureLoader();
   const cache = {};
   const tex = url => cache[url] || (cache[url] = new Promise(res => loader.load(url, t => {
-    t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = renderer.capabilities.getMaxAnisotropy(); res(t);
+    t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = maxAniso; res(t);
   }, undefined, () => res(null))));
-  // aynı görselden, yüzey oranına göre kırpılmış kopya (damar esnemesin)
-  const crop = (t, w, h, ox = 0) => {
-    const c = t.clone(); c.needsUpdate = true;
-    const ar = w / h;
-    if (ar >= 1) { c.repeat.set(1, 1 / ar); c.offset.set(0, (1 - 1 / ar) / 2); }
-    else { c.repeat.set(ar, 1); c.offset.set(clamp(ox, 0, 1 - ar), 0); }
+  // taş dokusu gerçek ölçüde: bir doku ~1.8 m taşı temsil eder; ayna tekrarı = ortadan simetrik (book-match)
+  const SLAB = 1.8;
+  const fit = (base, f) => {
+    const c = base.clone();
+    c.wrapS = c.wrapT = THREE.MirroredRepeatWrapping;
+    c.repeat.set(f.w / SLAB, f.h / SLAB);
+    c.offset.set(f.ox ?? (1 - f.w / SLAB / 2), f.oy ?? 0);
+    c.anisotropy = maxAniso;
+    c.needsUpdate = true;
+    c.updateMatrix();
     return c;
   };
 
-  // ---------------- ada ----------------
-  const W = 3.0, D = 1.25, H = .92, T = .065;           // genişlik, derinlik, yükseklik, plaka kalınlığı
-  const island = new THREE.Group();
-  const root = new THREE.Group(); root.add(island); scene.add(root);
-  if (!mobile) root.position.x = 2.45;
+  const oak = oakFloorTexture({ size: 1024, planks: 7, seed: 7 });
+  [oak.map, oak.roughnessMap].forEach(t => { t.repeat.set(4.4, 3.4); t.anisotropy = maxAniso; });
+  const plaster = plasterTexture({ size: 512, seed: 5, color: '#efe7dc' });
+  plaster.map.repeat.set(3, 2);
+  const walnut = walnutTexture({ size: 512, seed: 3, tone: 'dark' });
+  walnut.map.repeat.set(2, 1);
+  const brushed = brushedBrassTexture({ size: 256 });
 
-  const stoneMat = () => new THREE.MeshPhysicalMaterial({ roughness: .16, metalness: 0, clearcoat: 1, clearcoatRoughness: .05, envMapIntensity: 1.15, color: 0xffffff });
-  const topMat = stoneMat(), sideMatL = stoneMat(), sideMatR = stoneMat(), edgeMat = stoneMat();
-  const top = new THREE.Mesh(new RoundedBoxGeometry(W, T, D, 3, .012), [edgeMat, edgeMat, topMat, edgeMat, edgeMat, edgeMat]);
-  top.position.y = H - T / 2;
-  const sideGeo = new RoundedBoxGeometry(T, H - T, D, 3, .012);
-  const sideL = new THREE.Mesh(sideGeo, [sideMatL, sideMatL, edgeMat, edgeMat, edgeMat, edgeMat]);
-  const sideR = new THREE.Mesh(sideGeo, [sideMatR, sideMatR, edgeMat, edgeMat, edgeMat, edgeMat]);
-  sideL.position.set(-W / 2 + T / 2, (H - T) / 2, 0);
-  sideR.position.set(W / 2 - T / 2, (H - T) / 2, 0);
-  // dolap gövdesi: koyu mat ceviz tonu, ön yüzde ince pirinç tutamak çizgisi
-  const wood = new THREE.MeshStandardMaterial({ color: 0x241e19, roughness: .62, metalness: .05 });
-  const body = new THREE.Mesh(new THREE.BoxGeometry(W - 2 * T - .02, H - T - .1, D - .22), wood);
-  body.position.set(0, (H - T - .1) / 2 + .1, -.05);
-  const brass = new THREE.MeshStandardMaterial({ color: 0xc9a066, roughness: .28, metalness: 1, envMapIntensity: 1.2 });
-  const handle = new THREE.Mesh(new THREE.BoxGeometry(W - .5, .014, .014), brass);
-  handle.position.set(0, H - T - .09, D / 2 - .16);
-  const plinth = new THREE.Mesh(new THREE.BoxGeometry(W - 2 * T - .1, .1, D - .3), new THREE.MeshStandardMaterial({ color: 0x0e0c0a, roughness: .9 }));
-  plinth.position.set(0, .05, -.08);
-  // kapak çizgileri
-  for (let k = 1; k < 4; k++) {
-    const g = new THREE.Mesh(new THREE.BoxGeometry(.006, H - T - .14, .006), new THREE.MeshStandardMaterial({ color: 0x120f0c, roughness: 1 }));
-    g.position.set(-W / 2 + T + k * (W - 2 * T) / 4, (H - T - .1) / 2 + .1, D / 2 - .16 + .004);
-    island.add(g);
+  // ---------------- malzemeler ----------------
+  const M = {
+    floor: new THREE.MeshStandardMaterial({ map: oak.map, roughnessMap: oak.roughnessMap, roughness: 1, envMapIntensity: .55 }),
+    wall: new THREE.MeshStandardMaterial({ map: plaster.map, roughness: .92, envMapIntensity: .35 }),
+    lacquer: new THREE.MeshStandardMaterial({ color: 0xd8cfc1, roughness: .42, envMapIntensity: .6 }),
+    walnut: new THREE.MeshStandardMaterial({ map: walnut.map, roughness: .55, envMapIntensity: .55 }),
+    brass: new THREE.MeshStandardMaterial({ color: 0xc9a066, metalness: 1, roughness: .32, roughnessMap: brushed.roughnessMap, envMapIntensity: 1.25 }),
+    leather: new THREE.MeshStandardMaterial({ color: 0x6b4a33, roughness: .58, envMapIntensity: .5 }),
+    ceramic: new THREE.MeshPhysicalMaterial({ color: 0xf4efe8, roughness: .3, clearcoat: .6, envMapIntensity: .8 }),
+    shade: new THREE.MeshPhysicalMaterial({ color: 0xfff5e6, roughness: .15, transparent: true, opacity: .55, emissive: 0xffd9a0, emissiveIntensity: 0, envMapIntensity: .6 }),
+    leaf: new THREE.MeshStandardMaterial({ color: 0x5f7046, roughness: .7 }),
+    lemon: new THREE.MeshStandardMaterial({ color: 0xe9c24a, roughness: .45 }),
+    windowGlow: new THREE.MeshBasicMaterial({ color: new THREE.Color(0xfffaf0).multiplyScalar(2.2) }),
+    frame: new THREE.MeshStandardMaterial({ color: 0x2b2622, roughness: .5 }),
+    dark: new THREE.MeshStandardMaterial({ color: 0x1a1613, roughness: .8 }),
+  };
+
+  const stoneMats = [];
+  const stoneMat = f => { const m = createStoneMaterial({ roughness: .12, clearcoat: 1, clearcoatRoughness: .05, envMapIntensity: 1.15 }); m.userData.fit = f; stoneMats.push(m); return m; };
+
+  const room = new THREE.Group(); scene.add(room);
+  const add = (geo, mat, x, y, z, o = {}) => {
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(x, y, z);
+    if (o.ry) m.rotation.y = o.ry;
+    if (o.rx) m.rotation.x = o.rx;
+    if (o.rz) m.rotation.z = o.rz;
+    m.castShadow = o.cast ?? true; m.receiveShadow = o.recv ?? true;
+    (o.parent || room).add(m); return m;
+  };
+  const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+  const rbox = (w, h, d, r = .008) => new RoundedBoxGeometry(w, h, d, 2, r);
+
+  // ---------------- oda ----------------
+  const RW = 6.4, BACK = -1.85, FRONT = 5.5;
+  add(new THREE.PlaneGeometry(RW, FRONT - BACK), M.floor, 0, 0, (BACK + FRONT) / 2, { rx: -Math.PI / 2, cast: false });
+  add(new THREE.PlaneGeometry(RW, 4.2), M.wall, 0, 2.1, BACK, { cast: false });                       // arka duvar
+  const sideWall = (x, ry) => add(new THREE.PlaneGeometry(FRONT - BACK, 4.2), M.wall, x, 2.1, (BACK + FRONT) / 2, { ry, cast: false });
+  sideWall(-RW / 2, Math.PI / 2); sideWall(RW / 2, -Math.PI / 2);
+  // sol duvarda boy penceresi (gün ışığının kaynağı)
+  const win = new THREE.Group(); win.position.set(-RW / 2 + .01, 0, -.35); win.rotation.y = Math.PI / 2; room.add(win);
+  add(new THREE.PlaneGeometry(1.9, 2.5), M.windowGlow, 0, 1.55, 0, { parent: win, cast: false, recv: false });
+  [[-.95, .04], [.95, .04], [0, .025]].forEach(([x, w]) => add(box(w, 2.56, .05), M.frame, x, 1.55, .02, { parent: win, cast: false }));
+  [[.3, .05], [2.8, .05], [1.55, .025]].forEach(([y, h]) => add(box(1.94, h, .05), M.frame, 0, y, .02, { parent: win, cast: false }));
+
+  // ---------------- arka tezgah: boy dolaplar + taş arka panel ----------------
+  const BW = 3.4, BD = .62, BH = .87, BT = .04, SPL = 2.22;   // arka tezgah genişlik/derinlik/yükseklik, panel üst kotu
+  const bz = BACK + BD / 2;
+  // alt dolaplar (krem lake, ince pirinç tutamak)
+  add(box(BW, BH - .1, BD - .02), M.lacquer, 0, (BH - .1) / 2 + .1, bz - .01);
+  add(box(BW, .1, BD - .08), M.dark, 0, .05, bz - .04, { cast: false });
+  for (let k = 0; k < 4; k++) {
+    const x = -BW / 2 + BW / 8 + k * BW / 4;
+    add(box(BW / 4 - .012, BH - .14, .004), M.lacquer, x, (BH - .1) / 2 + .1, bz + BD / 2 - .01);
+    add(box(.36, .012, .02), M.brass, x, BH - .1, bz + BD / 2 + .005, { cast: false });
   }
-  [top, sideL, sideR, body, handle, plinth].forEach(m => { m.castShadow = true; m.receiveShadow = true; island.add(m); });
+  // arka tezgah üstü ve arka panel (taş)
+  const backTopMat = stoneMat({ w: BW, h: BD });
+  const backEdge = stoneMat({ w: BW, h: BT, oy: .3 });
+  add(rbox(BW + .02, BT, BD + .02, .006), [backEdge, backEdge, backTopMat, backEdge, backEdge, backEdge], 0, BH + BT / 2, bz);
+  const splMat = stoneMat({ w: BW, h: SPL - BH - BT });
+  add(box(BW, SPL - BH - BT, .02), splMat, 0, (SPL + BH + BT) / 2, BACK + .011, { cast: false });
+  // panelin üstünde ışıklı pirinç raf çizgisi
+  add(box(BW, .03, .2), M.brass, 0, SPL + .015, BACK + .1);
+  add(box(BW - .1, .008, .02), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffe2b0).multiplyScalar(1.6) }), 0, SPL - .006, BACK + .17, { cast: false, recv: false });
+  // iki yanda boy dolaplar (iki kapak, dikey pirinç tutamak)
+  [-1, 1].forEach(sg => {
+    const x = sg * (BW / 2 + .62);
+    add(box(1.22, 2.75, BD + .02), M.lacquer, x, 1.375, bz);
+    [-.305, .305].forEach(dx => {
+      add(box(.6, 2.7, .004), M.lacquer, x + dx, 1.375, bz + BD / 2 + .012);
+      add(box(.014, .9, .02), M.brass, x + dx + (dx > 0 ? -.27 : .27), 1.25, bz + BD / 2 + .03, { cast: false });
+    });
+  });
+  // musluk (pirinç), seramik vazoda yeşillik, panele yaslı ceviz kesme tahtası
+  const tap = new THREE.Group(); tap.position.set(.45, BH + BT, bz - .12); room.add(tap);
+  add(new THREE.CylinderGeometry(.025, .03, .36, 20), M.brass, 0, .18, 0, { parent: tap });
+  const spout = new THREE.TubeGeometry(new THREE.QuadraticBezierCurve3(new THREE.Vector3(0, .36, 0), new THREE.Vector3(0, .5, .02), new THREE.Vector3(0, .42, .22)), 16, .014, 10);
+  add(spout, M.brass, 0, 0, 0, { parent: tap });
+  add(new THREE.CylinderGeometry(.09, .07, .24, 32), M.ceramic, -.9, BH + BT + .12, bz - .05);
+  for (let i = 0; i < 7; i++) {
+    const a = i / 7 * Math.PI * 2;
+    add(new THREE.SphereGeometry(.07 + (i % 3) * .015, 10, 8), M.leaf, -.9 + Math.cos(a) * .07, BH + BT + .32 + (i % 2) * .08, bz - .05 + Math.sin(a) * .07);
+  }
+  add(rbox(.32, .46, .025, .01), M.walnut, -.35, BH + BT + .23, BACK + .06, { rx: -.12 });
 
-  // tabureler (oturma tarafı arkada, ada çevrilince görünür)
-  const leather = new THREE.MeshStandardMaterial({ color: 0x2b2420, roughness: .55 });
+  // ---------------- ada (waterfall) ----------------
+  const W = 2.6, D = 1.0, H = .92, T = .06;
+  const island = new THREE.Group(); island.position.set(0, 0, .35); room.add(island);
+  const topMat = stoneMat({ w: W, h: D });
+  const edgeMat = stoneMat({ w: W, h: T, oy: .2 });
+  add(rbox(W, T, D, .01), [edgeMat, edgeMat, topMat, edgeMat, edgeMat, edgeMat], 0, H - T / 2, 0, { parent: island });
+  const sideMatL = stoneMat({ w: D, h: H - T, ox: .1 }), sideMatR = stoneMat({ w: D, h: H - T, ox: .45 });
+  const sEdge = stoneMat({ w: T, h: H - T });
+  add(rbox(T, H - T, D, .01), [sideMatR, sideMatR, sEdge, sEdge, sEdge, sEdge], W / 2 - T / 2, (H - T) / 2, 0, { parent: island });
+  add(rbox(T, H - T, D, .01), [sideMatL, sideMatL, sEdge, sEdge, sEdge, sEdge], -W / 2 + T / 2, (H - T) / 2, 0, { parent: island });
+  // ceviz gövde arka (çalışma) tarafta; ön tarafta oturma boşluğu
+  add(box(W - 2 * T - .02, H - T - .1, .6), M.walnut, 0, (H - T - .1) / 2 + .1, -.18, { parent: island });
+  add(box(W - 2 * T - .02, .1, .5), M.dark, 0, .05, -.2, { parent: island, cast: false });
+  add(box(W - 2 * T - .02, .02, .02), M.brass, 0, H - T - .12, .125, { parent: island, cast: false });
+  // ada üstünde limon dolu seramik kase
+  add(new THREE.SphereGeometry(.17, 32, 16, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), M.ceramic, .62, H + .14, -.05, { parent: island });
+  [[.58, .02, 0], [.68, -.08, 0], [.64, -.02, .06], [.55, -.1, 0]].forEach(([x, z, dy]) => add(new THREE.SphereGeometry(.05, 16, 12), M.lemon, x, H + .05 + dy, z - .02, { parent: island }));
+
+  // tabureler (ön tarafta, tezgahın altına itilmiş)
   const stool = x => {
-    const g = new THREE.Group();
-    const seat = new THREE.Mesh(new THREE.CylinderGeometry(.17, .16, .055, 32), leather); seat.position.y = .66;
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(.13, .008, 8, 40), brass); ring.rotation.x = Math.PI / 2; ring.position.y = .26;
-    const leg = new THREE.Mesh(new THREE.CylinderGeometry(.018, .018, .64, 16), brass); leg.position.y = .33;
-    const foot = new THREE.Mesh(new THREE.CylinderGeometry(.15, .16, .018, 32), brass); foot.position.y = .01;
-    [seat, ring, leg, foot].forEach(m => { m.castShadow = true; g.add(m); });
-    g.position.set(x, 0, -D / 2 - .32);
+    const g = new THREE.Group(); g.position.set(x, 0, .32); island.add(g);
+    add(new THREE.CylinderGeometry(.19, .18, .06, 32), M.leather, 0, .68, 0, { parent: g });
+    add(rbox(.34, .16, .03, .012), M.leather, 0, .82, -.17, { parent: g, rx: .08 });
+    [[-.13, -.13], [.13, -.13], [-.13, .13], [.13, .13]].forEach(([lx, lz]) => {
+      const leg = add(new THREE.CylinderGeometry(.012, .014, .68, 10), M.brass, lx * .92, .34, lz * .92, { parent: g });
+      leg.rotation.z = lx * -.08; leg.rotation.x = lz * .08;
+    });
+    add(new THREE.TorusGeometry(.13, .007, 6, 32), M.brass, 0, .24, 0, { parent: g, rx: Math.PI / 2 });
     return g;
   };
-  island.add(stool(-.65), stool(.65));
+  [-.78, 0, .78].forEach(stool);
 
-  // sarkıt lambalar: ince kablo + pirinç kubbe + sıcak ampul ışığı
-  const bulbMat = new THREE.MeshStandardMaterial({ color: 0xfff1d6, emissive: 0xffd9a0, emissiveIntensity: 2.2 });
-  const lamp = x => {
-    const g = new THREE.Group();
-    const cord = new THREE.Mesh(new THREE.CylinderGeometry(.004, .004, 1.6, 6), new THREE.MeshStandardMaterial({ color: 0x111111 }));
-    cord.position.y = 2.95;
-    const shade = new THREE.Mesh(new THREE.SphereGeometry(.16, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), brass);
-    shade.material = brass.clone(); shade.material.side = THREE.DoubleSide;
-    shade.position.y = 2.15;
-    const bulb = new THREE.Mesh(new THREE.SphereGeometry(.055, 16, 12), bulbMat); bulb.position.y = 2.12;
-    g.add(cord, shade, bulb);
-    const pl = new THREE.PointLight(0xffd29a, .9, 3.2, 2); pl.position.y = 2.05; g.add(pl);
-    g.position.x = x;
-    return g;
+  // ---------------- sarkıt lambalar ----------------
+  const glowTex = createGlowTexture({ size: 128, color: '#ffd9a0' });
+  const bulbs = [];
+  [-.72, .72].forEach(x => {
+    const g = new THREE.Group(); g.position.set(x, 0, .35); room.add(g);
+    add(new THREE.CylinderGeometry(.003, .003, 2.1, 6), M.dark, 0, 3.15, 0, { parent: g, cast: false });
+    add(new THREE.CylinderGeometry(.035, .035, .05, 16), M.brass, 0, 2.08, 0, { parent: g, cast: false });
+    add(new THREE.SphereGeometry(.18, 32, 24), M.shade, 0, 1.92, 0, { parent: g, cast: false, recv: false });
+    const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
+    glow.scale.setScalar(.9); glow.position.y = 1.92; g.add(glow);
+    const pl = new THREE.PointLight(0xffd29a, 0, 3.4, 2); pl.position.y = 1.86; g.add(pl);
+    bulbs.push({ glow, pl });
+  });
+
+  // ---------------- LED aydınlatma (akşam modu) ----------------
+  // sıcak LED şeritler + zemine düşen ışık havuzları + ışıkta içten parlayan taş (arkadan aydınlatmalı mermer)
+  const LED = new THREE.Color(0xffc985);
+  const leds = [];
+  const ledStrip = (w, h, d, x, y, z, parent = room) => {
+    const m = new THREE.Mesh(box(w, h, d), new THREE.MeshBasicMaterial({ color: LED.clone().multiplyScalar(0), toneMapped: false }));
+    m.position.set(x, y, z); parent.add(m); leds.push(m); return m;
   };
-  const lamps = new THREE.Group(); lamps.add(lamp(-.7), lamp(.7)); island.add(lamps);
+  ledStrip(W - .14, .006, .012, 0, H - T - .006, .47, island);          // ada ön çıkıntısının altı
+  ledStrip(W - 2 * T - .04, .008, .01, 0, .012, .125, island);           // ada süpürgelik
+  ledStrip(BW - .04, .008, .01, 0, .012, bz + BD / 2 - .035);            // arka dolap süpürgelik
+  ledStrip(BW - .1, .008, .02, 0, SPL - .006, BACK + .17);               // raf altı
+  [-1, 1].forEach(sg => ledStrip(.008, 2.6, .01, sg * (BW / 2 + .015), 1.4, bz + BD / 2 - .02));  // boy dolap kenarları
+  const pools = [];
+  const poolTex = createGlowTexture({ size: 128, color: '#ffc985' });
+  const pool = (w, d, x, y, z, rx = -Math.PI / 2, parent = room) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshBasicMaterial({ map: poolTex, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
+    m.rotation.x = rx; m.position.set(x, y, z); m.renderOrder = 2; parent.add(m); pools.push(m); return m;
+  };
+  pool(W + .3, .9, 0, .004, .55, -Math.PI / 2, island);                 // ada önünde zemin
+  pool(BW + .2, .8, 0, .004, bz + .55);                                 // arka dolap önünde zemin
+  pool(BW, .7, 0, BH + BT + .32, BACK + .025, 0);                        // arka panel üzerinde yıkama ışığı
+  const ledLights = [new THREE.PointLight(0xffc985, 0, 1.8, 2), new THREE.PointLight(0xffc985, 0, 2.6, 2)];
+  ledLights[0].position.set(0, .12, .35 + .72); ledLights[1].position.set(0, SPL - .1, BACK + .35);
+  room.add(...ledLights);
+  // taşın içten parlama miktarı: arka panel tam, ada yanları orta, yüzeyler hafif
+  splMat.userData.glow = 1; sideMatL.userData.glow = sideMatR.userData.glow = .55; sEdge.userData.glow = .5;
+  edgeMat.userData.glow = .35; backEdge.userData.glow = .3;
+  // ---------------- ŞAHİN MERMER tabelası: arkadan LED hâleli, neon çerçeveli ----------------
+  // Harfler duvardan 4,5 cm önde; arkalarından duvara sıcak LED ışığı taşar, çevrelerinde neon tüp yanar.
+  // LED'ler açılırken neon gerçek tabela gibi titreyerek yanar; harflerin üzerinden ara ara ışık geçer.
+  const SIGN_W = 1.72, SIGN_H = SIGN_W * 548 / 1024;
+  const sign = new THREE.Group(); sign.position.set(0, SPL + .4, BACK); room.add(sign);
+  const sweepU = { value: -1 };
+  const signM = {};
+  const texP = u => new Promise(r => loader.load(u, r, undefined, () => r(null)));
+  Promise.all(['assets/logo-3d.png', 'assets/logo-halo.png', 'assets/logo-neon.png'].map(texP)).then(([lt, ht, nt]) => {
+    if (!lt || !ht || !nt) return;
+    lt.colorSpace = THREE.SRGBColorSpace; lt.anisotropy = maxAniso;
+    const geo = new THREE.PlaneGeometry(SIGN_W, SIGN_H);
+    const plane = (mat, z, sx = 1) => { const m = new THREE.Mesh(geo, mat); m.position.z = z; m.scale.setScalar(sx); sign.add(m); return m; };
+    signM.shadow = plane(new THREE.MeshBasicMaterial({ color: 0x000000, alphaMap: ht, transparent: true, opacity: .14, depthWrite: false, toneMapped: false }), .004);
+    signM.shadow.position.set(.012, -.028, .004);
+    signM.halo = plane(new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffc27a).multiplyScalar(1.3), alphaMap: ht, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }), .007, 1.08);
+    signM.neon = plane(new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffd9a0).multiplyScalar(1.25), alphaMap: nt, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }), .03);
+    const lm = new THREE.MeshStandardMaterial({ map: lt, transparent: true, alphaTest: .3, roughness: .32, metalness: .3, envMapIntensity: .9 });
+    lm.onBeforeCompile = sh => {
+      sh.uniforms.uSweep = sweepU;
+      sh.fragmentShader = sh.fragmentShader
+        .replace('#include <common>', () => '#include <common>\nuniform float uSweep;')
+        .replace('#include <emissivemap_fragment>', () => `#include <emissivemap_fragment>
+        #ifdef USE_MAP
+        { float g = exp( -pow( ( vMapUv.x + vMapUv.y * .35 - uSweep ) * 14.0, 2.0 ) ); totalEmissiveRadiance += vec3( 1.0, .82, .55 ) * g * 1.3 * diffuseColor.a; }
+        #endif`);
+    };
+    lm.customProgramCacheKey = () => 'signSweep1';
+    signM.letters = plane(lm, .045);
+    envBase.set(lm, lm.envMapIntensity);
+  });
+  // neon yanma titremesi: (zaman, parlaklık) adımları, sonra sürekli yanık
+  const FLICK = [[0, 0], [.06, 1], [.11, 0], [.24, 0], [.28, .9], [.33, .15], [.47, 1], [.52, .35], [.6, 1], [.9, .7], [.95, 1]];
+  const flicker = s => { if (s >= 1) return 1; let v = 0; for (const [k, b] of FLICK) if (s >= k) v = b; return v; };
+  let neonOn = false, neonT0 = 0;
 
-  // zemin: sadece gölge + altın tonlu yumuşak hale (kenarlar arka plana karışır)
-  // parlak kaide + altın kenar: ada sahnede bir mücevher gibi dursun
-  const PR = 1.85;
-  const podium = new THREE.Mesh(new THREE.CylinderGeometry(PR, PR + .04, .07, 128),
-    new THREE.MeshPhysicalMaterial({ color: 0xf6f1ea, roughness: .22, clearcoat: 1, clearcoatRoughness: .08, envMapIntensity: 1 }));
-  podium.position.y = -.035; podium.receiveShadow = true; root.add(podium);
-  const rimGold = new THREE.Mesh(new THREE.TorusGeometry(PR + .02, .022, 16, 160), brass);
-  rimGold.rotation.x = Math.PI / 2; rimGold.position.y = 0; root.add(rimGold);
-  const rimGold2 = new THREE.Mesh(new THREE.TorusGeometry(PR + .045, .008, 8, 160), brass);
-  rimGold2.rotation.x = Math.PI / 2; rimGold2.position.y = -.07; root.add(rimGold2);
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), new THREE.ShadowMaterial({ opacity: .16 }));
-  floor.rotation.x = -Math.PI / 2; floor.position.y = -.075; floor.receiveShadow = true; root.add(floor);
-  const gc = document.createElement('canvas'); gc.width = gc.height = 256;
-  const gx = gc.getContext('2d'), grd = gx.createRadialGradient(128, 128, 0, 128, 128, 128);
-  grd.addColorStop(0, 'rgba(217,183,122,.30)'); grd.addColorStop(.45, 'rgba(217,183,122,.08)'); grd.addColorStop(1, 'rgba(217,183,122,0)');
-  gx.fillStyle = grd; gx.fillRect(0, 0, 256, 256);
-  const halo = new THREE.Mesh(new THREE.PlaneGeometry(6.5, 4.2), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(gc), transparent: true, depthWrite: false }));
-  halo.rotation.x = -Math.PI / 2; halo.position.y = .002; root.add(halo);
+  const envBase = new Map();
+  scene.traverse(o => { const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []; ms.forEach(m => { if ('envMapIntensity' in m && !envBase.has(m)) envBase.set(m, m.envMapIntensity); }); });
+  const winDay = M.windowGlow.color.clone(), winNight = new THREE.Color(0x3a4f7a).multiplyScalar(.55);
+  let night = 0, nightT = 0, userToggled = false;
 
-  // altın toz
-  const pg = new THREE.BufferGeometry(), PC = mobile ? 180 : 420, pos = new Float32Array(PC * 3);
-  for (let i = 0; i < PC; i++) { pos[i * 3] = (Math.random() - .5) * 14; pos[i * 3 + 1] = Math.random() * 5; pos[i * 3 + 2] = (Math.random() - .5) * 8 - 1; }
-  pg.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  const dust = new THREE.Points(pg, new THREE.PointsMaterial({ color: 0xd9b77a, size: .025, transparent: true, opacity: .6, depthWrite: false }));
-  scene.add(dust);
+  // ---------------- temas gölgeleri (yumuşak koyuluk) ----------------
+  const shadowPlane = (w, d, x, z, op) => {
+    const t = createContactShadowTexture({ size: 256, softness: .55, opacity: 1, aspect: w / d });
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshBasicMaterial({ color: 0x000000, alphaMap: t, transparent: true, opacity: op, depthWrite: false, toneMapped: false }));
+    m.rotation.x = -Math.PI / 2; m.position.set(x, .003, z); m.renderOrder = 1; room.add(m); return m;
+  };
+  shadowPlane(W + .5, D + .45, 0, .35, .5);
+  shadowPlane(BW + 2.8, BD + .4, 0, bz + .1, .4);
+  [-.78, 0, .78].forEach(x => shadowPlane(.55, .55, x, .67, .32));
 
   // ---------------- taş giydirme ----------------
-  let curIdx = 0;
-  async function apply(i) {
-    const t = await tex(stones[i]); if (!t) return;
-    topMat.map = crop(t, W, D);
-    sideMatL.map = crop(t, D, H, 0);
-    sideMatR.map = crop(t, D, H, .3);
-    edgeMat.map = crop(t, 1, 1);
-    [topMat, sideMatL, sideMatR, edgeMat].forEach(m => { m.needsUpdate = true; });
+  let curIdx = 0, dressTok = 0;
+  async function dress(i, animate) {
+    const tok = ++dressTok;
+    const base = await tex(stones[i]); if (!base || tok !== dressTok) return;
+    if (!animate) { stoneMats.forEach(m => setStoneMap(m, fit(base, m.userData.fit))); return; }
+    const entries = stoneMats.map(m => ({ material: m, next: fit(base, m.userData.fit) }));
+    renderer.initTexture(entries[0].next);   // GPU'ya önceden yükle: geçiş ilk karede takılmasın
+    await wipeStones(entries, { duration: 1.35, from: -4.2, to: 4.2 });
   }
-  await apply(0);
-  stones.slice(1).forEach(tex);   // diğerlerini arkadan yükle
+  await dress(0, false);
+  stones.slice(1).forEach(tex);   // diğer taşları arkadan yükle
 
   // ---------------- etkileşim ----------------
-  let yaw = -.55, vel = 0, gyro = 0, gyroT = 0, pitch = 0, pitchT = 0, intro = 0, active = true, onDrag = null, pulse = 0;
+  let yaw = 0, yawT = 0, vel = 0, gyroY = 0, gyroYT = 0, gyroP = 0, gyroPT = 0, active = true, onDrag = null;
+  const YL = .62;                                   // gezinme sınırı (± radyan)
   const hero$ = document.querySelector('.hero');
-  const inZone = (x, y, el) => !(el && el.closest && el.closest('a,button,.h3d__chips')) && (mobile ? y < innerHeight * .5 : x > innerWidth * .4);
+  const inZone = (x, y, el) => !(el && el.closest && el.closest('a,button,.h3d__pick,.h3d__toast')) && (mobile ? y < innerHeight * K * .85 : x > innerWidth * .38);
   let lx = null, lt = 0;
   const start = (x, y, el) => { if (inZone(x, y, el)) { lx = x; lt = performance.now(); vel = 0; } };
   const move = x => {
     if (lx === null) return;
     const now = performance.now(), dx = x - lx;
-    const d = dx * (mobile ? .011 : .007);
-    yaw += d; vel = d / Math.max(8, now - lt) * 16;
+    const d = -dx * (mobile ? .0065 : .0042);
+    // sınırın dışına çekince lastik gibi zorlaşır
+    const over = Math.max(0, Math.abs(yawT) - YL);
+    yawT += d * (over > 0 && Math.sign(d) === Math.sign(yawT) ? 1 / (1 + over * 8) : 1);
+    vel = d / Math.max(8, now - lt) * 16;
     lx = x; lt = now; onDrag && onDrag();
   };
   const end = () => { lx = null; };
@@ -187,64 +336,120 @@ export async function createScene(canvas, { stones, mobile }) {
   addEventListener('pointermove', e => { if (e.pointerType === 'mouse') { mx = e.clientX / innerWidth - .5; my = e.clientY / innerHeight - .5; } });
 
   // telefon eğimi (iOS ilk dokunuşta izin ister)
-  let base = null, gyroOn = false;
+  let base0 = null, gyroOn = false;
   function onOri(e) {
-    if (e.gamma == null) return;
-    if (!base) base = { g: e.gamma, b: e.beta };
-    gyroT = clamp((e.gamma - base.g) / 28, -1, 1) * .75;
-    pitchT = clamp((e.beta - base.b) / 30, -1, 1) * .35;
+    if (e.gamma == null || e.beta == null) return;
+    if (!base0) base0 = { g: e.gamma, b: e.beta };
+    gyroYT = clamp((e.gamma - base0.g) / 30, -1, 1) * -.22;
+    gyroPT = clamp((e.beta - base0.b) / 30, -1, 1) * .07;
     gyroOn = true;
   }
   function askGyro() {
     if (gyroOn || askGyro.done) return; askGyro.done = true;
-    const D = window.DeviceOrientationEvent;
-    if (D && typeof D.requestPermission === 'function') D.requestPermission().then(s => { if (s === 'granted') addEventListener('deviceorientation', onOri); }).catch(() => {});
+    const DO = window.DeviceOrientationEvent;
+    if (DO && typeof DO.requestPermission === 'function') DO.requestPermission().then(s => { if (s === 'granted') addEventListener('deviceorientation', onOri); }).catch(() => {});
   }
   if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission !== 'function') addEventListener('deviceorientation', onOri);
 
-  // ---------------- döngü ----------------
+  // ---------------- açılış sinematiği ----------------
+  // kamera cilalı ada yüzeyine çok yakından başlar, sonra geri çekilip mutfağı gösterir
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // test anahtarları (müşteri görmez): ?nointro açılışı atlar, ?night LED'ler açık başlar
+  const qs = location.search;
+  let intro = reduced || /[?&]nointro/.test(qs) ? 1 : 0;
+  const INTRO_S = 3.6;
+  const macroPos = new THREE.Vector3(.95, H + .2, .35 + .62);
+  const macroLook = new THREE.Vector3(.1, H, .2);
+  const camPos = new THREE.Vector3(), look = new THREE.Vector3(), restPos = new THREE.Vector3();
+  let autoLit = reduced || /[?&]nointro/.test(qs), onLights = null;
+  if (/[?&]night/.test(qs)) { nightT = night = 1; autoLit = true; }
+
   const clock = new THREE.Clock();
-  const tgt = new THREE.Vector3(0, CAM.ly, 0);
-  function frame() {
-    requestAnimationFrame(frame);
+  function loop() {
+    requestAnimationFrame(loop);
     if (!active) return;
     const dt = Math.min(.05, clock.getDelta()), t = clock.elapsedTime;
-    intro = Math.min(1, intro + dt * .7);
-    // açılışta ada yarım tur dönerek yerine oturur
-    const iy = (1 - ease(intro)) * -2.2;
-    if (lx === null) { yaw += vel; vel *= .93; }
-    gyro += (gyroT - gyro) * .08; pitch += (pitchT - pitch) * .08;
-    island.rotation.y = yaw + iy + gyro + mx * .35;
-    const s = (.82 + .18 * ease(intro)) * (1 + Math.sin(Math.min(1, pulse) * Math.PI) * .035);
-    island.scale.setScalar(s);
-    if (pulse < 1) pulse += dt * 2.2;
-    lamps.children.forEach((l, k) => { l.rotation.z = Math.sin(t * .9 + k) * .025; });
-    dust.rotation.y = t * .015;
-    camera.position.x = CAM.x + mx * .5; camera.position.z = CAM.z;
-    camera.position.y = CAM.y + pitch + my * -.3;
-    camera.lookAt(root.position.x * (mobile ? 1 : .55), tgt.y, 0);
+    if (intro < 1) intro = Math.min(1, intro + dt / INTRO_S);
+    const ip = easeIO(intro);
+
+    // sürükleme ataleti + sınırda yay gibi geri dönüş
+    if (lx === null) {
+      yawT += vel; vel *= .92;
+      if (Math.abs(yawT) > YL) { yawT += (Math.sign(yawT) * YL - yawT) * .12; vel *= .6; }
+    }
+    yaw += (yawT - yaw) * .12;
+    gyroY += (gyroYT - gyroY) * .07; gyroP += (gyroPT - gyroP) * .07;
+    const breathe = Math.sin(t * .23) * .025;            // durgun değil, hafif nefes alan sahne
+
+    const a = yaw + gyroY + breathe + mx * .25;
+    const p = REST.pitch + gyroP + my * -.06;
+    restPos.set(TARGET.x + Math.sin(a) * Math.cos(p) * REST.r, TARGET.y + Math.sin(p) * REST.r, TARGET.z + Math.cos(a) * Math.cos(p) * REST.r);
+    camPos.lerpVectors(macroPos, restPos, ip);
+    look.lerpVectors(macroLook, TARGET, ip);
+    camera.position.copy(camPos);
+    camera.lookAt(look);
+
+    // açılış bittikten kısa süre sonra LED'ler bir kez kendiliğinden yanar (kullanıcı dokunmadıysa)
+    if (!userToggled && !autoLit && t > INTRO_S + 1.4) { autoLit = true; nightT = 1; onLights && onLights(true); }
+    night += (nightT - night) * Math.min(1, dt * 2.4);
+    const n = night, ns = n * n * (3 - 2 * n);
+
+    // lambalar açılışta yavaşça yanar; akşamda daha parlak
+    const lampOn = clamp((intro - .25) / .5, 0, 1);
+    bulbs.forEach(({ glow, pl }, k) => {
+      const fl = 1 + Math.sin(t * 3 + k) * .015;
+      glow.material.opacity = (.5 + .45 * ns) * lampOn * fl; pl.intensity = (1.1 + 1.6 * ns) * lampOn * fl;
+    });
+    M.shade.emissiveIntensity = (1.4 + 1.2 * ns) * lampOn;
+    // gündüz → akşam: güneş ve ortam ışığı azalır, pencere lacivertleşir, LED'ler yanar, taş içten parlar
+    sun.intensity = lerp(2.6, .1, ns);
+    hemi.intensity = lerp(.35, .03, ns);
+    const envK = lerp(1, .17, ns);
+    envBase.forEach((v, m) => { m.envMapIntensity = v * envK; });
+    M.windowGlow.color.lerpColors(winDay, winNight, ns);
+    const ledK = 2.4 * ns * (1 + Math.sin(t * 2.1) * .01);
+    leds.forEach(m => m.material.color.copy(LED).multiplyScalar(ledK));
+    pools.forEach((m, k) => { m.material.opacity = (k === 2 ? .55 : .75) * ns; });
+    ledLights[0].intensity = 1.3 * ns; ledLights[1].intensity = 1.6 * ns;
+    // tabela: neon titreyerek yanar, sonra hafifçe nefes alır; gündüz sadece ince hâle + duvara gölge
+    if (nightT > .5 && !neonOn) { neonOn = true; neonT0 = t; }
+    if (nightT < .5) neonOn = false;
+    const fk = neonOn ? flicker((t - neonT0) / 1.5) : 0;
+    const breath = 1 + Math.sin(t * 2.1) * .06 + Math.sin(t * 37) * Math.sin(t * 11) * .025;
+    if (signM.neon) {
+      const on = Math.min(ns * 1.4, 1) * fk * breath;
+      signM.neon.material.opacity = .95 * on;
+      signM.halo.material.opacity = .14 * (1 - ns) + .9 * on;
+      signM.shadow.material.opacity = .14 * (1 - ns);
+    }
+    sweepU.value = ((t % 6) / 6) * 2.4 - .5;
+    stoneMats.forEach(m => { const u = m.userData.u; if (u && u.uGlow) u.uGlow.value = (m.userData.glow || .08) * ns; });
+    renderer.toneMappingExposure = lerp(.82, 1.0, ip) * lerp(1, 1.12, ns);
+
+    const w = innerWidth, h = innerHeight;
+    renderer.setViewport(0, h * (1 - K), w, h * K);
     renderer.render(scene, camera);
   }
-  frame();
+  loop();
 
-  addEventListener('resize', () => {
-    camera.aspect = innerWidth / innerHeight; fit(); camera.far = CAM.z * 4; view();
-    renderer.setSize(innerWidth, innerHeight, false);
-  });
+  addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight, false); frame(); });
 
   return {
     setProgress() {},
     setLabels() {},
     setActive(v) { active = v; },
-    nudge(dy) { vel += clamp(dy * .0004, -.02, .02); },
+    nudge(dy) { vel += clamp(dy * -.00035, -.012, .012); },
     onDrag(fn) { onDrag = fn; },
-    // taş değiştir: kısa nabız + çeyrek tur
+    // LED ışıkları: açık/kapalı (aç-kapa animasyonlu). Dönen değer: yeni durum
+    setLights(on) { userToggled = true; nightT = on ? 1 : 0; return !!on; },
+    lightsOn() { return nightT > .5; },
+    onLights(fn) { onLights = fn; },
     async setStone(url) {
       let i = stones.indexOf(url);
       if (i < 0) { stones.push(url); i = stones.length - 1; }
       if (i === curIdx) return;
-      curIdx = i; pulse = 0; vel += .09;
-      await apply(i);
+      curIdx = i;
+      await dress(i, !reduced);
     },
   };
 }

@@ -1,5 +1,5 @@
-import { PHONE, OWNER, PRIZES, SPIN_PLAN, PRIZE_HOURS, LINES, FAMS, RING, CAT_ICON } from './data.js';
-import { STONES as RAW, CATS } from './catalog.js';
+import { PHONE, OWNER, PRIZES, SPIN_PLAN, PRIZE_HOURS, LINES, FAMS, RING, CAT_ICON, HERO3D } from './data.js?v=10';
+import { STONES as RAW, CATS } from './catalog.js?v=10';
 
 if ("scrollRestoration" in history) history.scrollRestoration = "manual";
 scrollTo(0, 0);
@@ -168,6 +168,7 @@ function select(stone) {
   updateSel();
   const s = stoneById(stone);
   scene && s && scene.setStone(s.tx);
+  const hi = ringStones.findIndex(r => r.id === stone); if (hi >= 0 && hi !== heroIdx) { heroIdx = hi; renderChips(); }
 }
 function updateSel() {}
 
@@ -426,28 +427,46 @@ function done() {
 }
 const failSafe = setTimeout(done, 4500);
 
-const ringStones = RING.map(stoneById).filter(Boolean);
-// açılıştaki adada denenecek taşlar
-let heroIdx = 0;
+// açılıştaki 3D mutfakta denenecek temel taşlar (data.js → HERO3D)
+const ringStones = HERO3D.map(h => { const s = stoneById(h.id); return s && { ...s, label: h.label }; }).filter(Boolean);
+let heroIdx = 0, toastT = null;
 function renderChips() {
-  $('#h3dChips').innerHTML = ringStones.map((s, i) => `<button class="h3d__chip ${i === heroIdx ? 'is-on' : ''}" data-hi="${i}" role="option" aria-selected="${i === heroIdx}" aria-label="${esc(s.name)}" style="background-image:url(${s.sw})"></button>`).join('');
+  $('#h3dChips').innerHTML = ringStones.map((s, i) => `<button class="h3d__chip ${i === heroIdx ? 'is-on' : ''}" data-hi="${i}" role="option" aria-selected="${i === heroIdx}" aria-label="${esc(s.name)}"><i style="background-image:url(${s.sw})"></i><span>${esc(s.label)}</span></button>`).join('');
   const s = ringStones[heroIdx];
-  $('#h3dName').innerHTML = `${esc(s.name)} <small>${LINES[s.line].short}</small> <u>Gör →</u>`;
+  $('#h3dName').innerHTML = `${esc(s.name)} <small>${LINES[s.line].short}</small> <u>Gerçek fotoğraf →</u>`;
+}
+function heroToast(s) {
+  const t = $('#h3dToast');
+  t.innerHTML = `<b>✓ ${esc(s.label)} mutfağınızda</b><button type="button" data-open-wheel>%10 indirimle yaptır →</button>`;
+  t.classList.add('on');
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 5200);
 }
 renderChips();
 $('#h3dChips').addEventListener('click', e => {
   const b = e.target.closest('[data-hi]'); if (!b) return;
+  if (+b.dataset.hi === heroIdx) return;
   heroIdx = +b.dataset.hi; renderChips();
-  scene && scene.setStone(ringStones[heroIdx].tx);
+  const s = ringStones[heroIdx];
+  state.stone = s.id; store.set('sel', { stone: s.id, cat: state.cat });
+  scene && scene.setStone(s.tx);
   $('#swipeHint').classList.remove('on');
+  heroToast(s);
+  b.scrollIntoView && $$('.h3d__chip')[heroIdx].scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
 });
 $('#h3dName').addEventListener('click', () => openStone(ringStones[heroIdx].id));
-import('./scene.js?v=8b').then(async ({ createScene }) => {
+import('./scene.js?v=10').then(async ({ createScene }) => {
   scene = await createScene($('#stage'), { stones: ringStones.map(s => s.tx), mobile: innerWidth < 720 });
-  const hint = $('#swipeHint'); hint.classList.add('on');
+  const hint = $('#swipeHint');
+  setTimeout(() => hint.classList.add('on'), 2600);
   scene.onDrag(() => hint.classList.remove('on'));
   $('#h3d').classList.add('on');
+  // LED ışık düğmesi
+  const lb = $('#h3dLights');
+  const showLights = on => { lb.classList.toggle('is-on', on); lb.setAttribute('aria-pressed', on); };
+  scene.onLights(showLights);
+  lb.addEventListener('click', () => { showLights(scene.setLights(!scene.lightsOn())); hint.classList.remove('on'); });
+  lb.classList.add('ready');
   clearTimeout(failSafe); done(); onScroll();
-}).catch(err => { console.warn('3D devre dışı:', err); clearTimeout(failSafe); done(); $('#stage').style.background = `url(assets/cat/sahne/${ringStones[0].id}.webp) center 20%/cover`; $('#h3d').classList.add('on'); });
+}).catch(err => { console.warn('3D devre dışı:', err); clearTimeout(failSafe); done(); $('#stage').style.background = `url(assets/cat/sahne/${ringStones[1].id}.webp) center 20%/cover`; $('#h3d').classList.add('on'); });
 
 onScroll();

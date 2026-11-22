@@ -35,3 +35,16 @@ export const FAMS = [
 export const RING = ['p-calacatta-oro', 'm-fortuna', 'p-classic-statuario', 'm-serenade', 'p-sahara-noir', 'm-figaro', 'p-magellano', 'p-verde-france', 'm-spring', 'p-pietra-grey'];
 // Kategori kartının kapak görseli (ilk görsel değilse)
 export const CAT_ICON = { mutfak: '🍳', ada: '🏝️', masa: '🍽️', duvar: '🧱', 'tezgah-alni': '🔲', merdiven: '🪜', denizlik: '🪟' };
+
+// Açılıştaki 3D mutfakta denenecek, en çok tercih edilen temel görünümler (açıktan koyuya)
+export const HERO3D = [
+  { id: 'm-aida', label: 'Beyaz' },
+  { id: 'p-calacatta-oro', label: 'Calacatta' },
+  { id: 'p-classic-statuario', label: 'Statuario' },
+  { id: 'b-taj-mahal', label: 'Taj Mahal' },
+  { id: 'b-traverten-beige', label: 'Traverten' },
+  { id: 'm-serenade', label: 'Bej' },
+  { id: 'b-tundra-grey', label: 'Gri' },
+  { id: 'p-nero-marquinia', label: 'Siyah Damarlı' },
+  { id: 'm-fortuna', label: 'Siyah' },
+];
