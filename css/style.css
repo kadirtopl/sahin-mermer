@@ -717,3 +717,30 @@ body{background:var(--ink) !important}
 .foot__yazi{width:190px;height:auto;filter:drop-shadow(0 0 8px rgba(255,190,110,.5))}
 /* LED düğmesi telefonda küçük: tabelaya değmesin */
 @media (max-width:720px){.h3d__lights{top:auto;bottom:calc(53svh + 56px);right:12px;height:36px;padding:0 12px 0 6px;gap:7px}.h3d__lights b{font-size:12px}}
+
+/* ================= v11: inceleme düzeltmeleri ================= */
+/* 3D hazır olmadan görünmez çiplere dokunulamasın */
+.h3d:not(.on) .h3d__pick,.h3d:not(.on) .h3d__toast,.h3d:not(.on) .h3d__lights{pointer-events:none}
+/* kısa ekranlı telefonlarda çip şeridi başlığın üstüne binmesin: yazı bloğunun hemen üstüne yaslanır */
+@media (max-width:720px){
+  .hero__pin{--pickTop:min(47svh,calc(100svh - 420px))}
+  .h3d__pick{top:var(--pickTop)}
+  .h3d .swipe-hint{top:calc(var(--pickTop) - 52px)}
+  .h3d__toast{top:calc(var(--pickTop) - 56px)}
+  .h3d__lights{top:calc(var(--pickTop) - 100px);bottom:auto}
+}
+/* uzun taş adlarında bildirim ekrandan taşmasın */
+.h3d__toast{max-width:calc(100% - 24px)}
+.h3d__toast b{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.h3d__toast button{flex:none}
+/* masaüstünde çip alanı koyu adanın üstünde okunur kalsın */
+@media (min-width:721px){
+  .h3d__pick{background:rgba(247,242,234,.86);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-radius:22px;padding:12px 0 8px;box-shadow:0 18px 40px -24px rgba(40,30,20,.5)}
+  .h3d .swipe-hint small{background:rgba(247,242,234,.86);padding:4px 10px;border-radius:999px}
+  .h3d.on ~ .scrollcue,.hero__pin .scrollcue{display:none}
+}
+/* kısa ekranlı telefonlar: üstteki sayaç satırı gizli (alttaki çubukta zaten var), 3D'ye yer kalsın */
+@media (max-width:720px) and (max-height:740px){
+  .hero .hero__inner .eyebrow{display:none}
+  .hero__pin{--pickTop:min(47svh,calc(100svh - 385px))}
+}

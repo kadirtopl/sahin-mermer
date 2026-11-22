@@ -1,5 +1,5 @@
-import { PHONE, OWNER, PRIZES, SPIN_PLAN, PRIZE_HOURS, LINES, FAMS, RING, CAT_ICON, HERO3D } from './data.js?v=10';
-import { STONES as RAW, CATS } from './catalog.js?v=10';
+import { PHONE, OWNER, PRIZES, SPIN_PLAN, PRIZE_HOURS, LINES, FAMS, RING, CAT_ICON, HERO3D } from './data.js?v=13';
+import { STONES as RAW, CATS } from './catalog.js?v=13';
 
 if ("scrollRestoration" in history) history.scrollRestoration = "manual";
 scrollTo(0, 0);
@@ -45,6 +45,7 @@ if (window.Lenis && !reduced) {
 function lockScroll(on) {
   document.body.classList.toggle('lock', on);
   if (lenis) on ? lenis.stop() : lenis.start();
+  if (scene) onScroll();
 }
 $$('a[href^="#"]').forEach(a => a.addEventListener('click', e => {
   const id = a.getAttribute('href');
@@ -88,9 +89,10 @@ function onScroll() {
     scene.nudge(y - lastSY);
     const st = $('#stage');
     st.style.transform = `translate3d(0,${-Math.min(y, heroH)}px,0)`;
-    const visible = y < heroH;
-    st.style.opacity = visible ? 1 : 0;
-    scene.setActive(visible);
+    st.style.opacity = y < heroH ? 1 : 0;
+    // 3D yalnızca çizildiği alan ekrandayken ve üstünü bir pencere kapatmıyorken çalışır
+    const area = innerHeight * (innerWidth < 720 ? .6 : 1);
+    scene.setActive(y < Math.min(heroH, area) && !document.body.classList.contains('lock'));
   }
   lastSY = y;
 }
@@ -167,8 +169,7 @@ function select(stone) {
   $$('.sw', swEl).forEach(t => t.classList.toggle('is-sel', t.dataset.stone === stone));
   updateSel();
   const s = stoneById(stone);
-  scene && s && scene.setStone(s.tx);
-  const hi = ringStones.findIndex(r => r.id === stone); if (hi >= 0 && hi !== heroIdx) { heroIdx = hi; renderChips(); }
+  if (scene && s) { scene.setStone(s.tx); heroIdx = ringStones.findIndex(r => r.id === stone); renderChips(s); }
 }
 function updateSel() {}
 
@@ -430,9 +431,11 @@ const failSafe = setTimeout(done, 4500);
 // açılıştaki 3D mutfakta denenecek temel taşlar (data.js → HERO3D)
 const ringStones = HERO3D.map(h => { const s = stoneById(h.id); return s && { ...s, label: h.label }; }).filter(Boolean);
 let heroIdx = 0, toastT = null;
-function renderChips() {
+// shown: 3D'de görünen taş (çiplerde yoksa heroIdx = -1 ve hiçbir çip seçili görünmez)
+function renderChips(shown) {
   $('#h3dChips').innerHTML = ringStones.map((s, i) => `<button class="h3d__chip ${i === heroIdx ? 'is-on' : ''}" data-hi="${i}" role="option" aria-selected="${i === heroIdx}" aria-label="${esc(s.name)}"><i style="background-image:url(${s.sw})"></i><span>${esc(s.label)}</span></button>`).join('');
-  const s = ringStones[heroIdx];
+  const s = shown || ringStones[heroIdx] || ringStones[0];
+  $('#h3dName').dataset.id = s.id;
   $('#h3dName').innerHTML = `${esc(s.name)} <small>${LINES[s.line].short}</small> <u>Gerçek fotoğraf →</u>`;
 }
 function heroToast(s) {
@@ -448,14 +451,17 @@ $('#h3dChips').addEventListener('click', e => {
   heroIdx = +b.dataset.hi; renderChips();
   const s = ringStones[heroIdx];
   state.stone = s.id; store.set('sel', { stone: s.id, cat: state.cat });
-  scene && scene.setStone(s.tx);
+  if (scene) scene.setStone(s.tx);
+  else $('#stage').style.backgroundImage = `url(assets/cat/sahne/${s.id}.webp)`;   // 3D çalışmıyorsa gerçek fotoğraf değişsin
   $('#swipeHint').classList.remove('on');
   heroToast(s);
   b.scrollIntoView && $$('.h3d__chip')[heroIdx].scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
 });
-$('#h3dName').addEventListener('click', () => openStone(ringStones[heroIdx].id));
-import('./scene.js?v=10').then(async ({ createScene }) => {
+$('#h3dName').addEventListener('click', e => openStone(e.currentTarget.dataset.id || ringStones[0].id));
+import('./scene.js?v=13').then(async ({ createScene }) => {
   scene = await createScene($('#stage'), { stones: ringStones.map(s => s.tx), mobile: innerWidth < 720 });
+  // 3D hazırlanırken bir çipe dokunulduysa sahne de o taşa geçsin
+  if (heroIdx > 0) scene.setStone(ringStones[heroIdx].tx);
   const hint = $('#swipeHint');
   setTimeout(() => hint.classList.add('on'), 2600);
   scene.onDrag(() => hint.classList.remove('on'));
@@ -464,9 +470,10 @@ import('./scene.js?v=10').then(async ({ createScene }) => {
   const lb = $('#h3dLights');
   const showLights = on => { lb.classList.toggle('is-on', on); lb.setAttribute('aria-pressed', on); };
   scene.onLights(showLights);
+  showLights(scene.lightsOn());
   lb.addEventListener('click', () => { showLights(scene.setLights(!scene.lightsOn())); hint.classList.remove('on'); });
   lb.classList.add('ready');
   clearTimeout(failSafe); done(); onScroll();
-}).catch(err => { console.warn('3D devre dışı:', err); clearTimeout(failSafe); done(); $('#stage').style.background = `url(assets/cat/sahne/${ringStones[1].id}.webp) center 20%/cover`; $('#h3d').classList.add('on'); });
+}).catch(err => { console.warn('3D devre dışı:', err); clearTimeout(failSafe); done(); heroIdx = 1; renderChips(); $('#stage').style.background = `url(assets/cat/sahne/${ringStones[1].id}.webp) center 20%/cover`; $('#h3d').classList.add('on'); });
 
 onScroll();

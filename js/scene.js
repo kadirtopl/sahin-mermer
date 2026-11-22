@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { createStudioEnvironment, createContactShadowTexture, createGlowTexture } from './s3d/env.js?v=10';
-import { oakFloorTexture, walnutTexture, plasterTexture, brushedBrassTexture } from './s3d/textures.js?v=10';
-import { createStoneMaterial, setStoneMap, wipeStones } from './s3d/stoneMat.js?v=10';
+import { createStudioEnvironment, createContactShadowTexture, createGlowTexture } from './s3d/env.js?v=13';
+import { oakFloorTexture, walnutTexture, plasterTexture, brushedBrassTexture } from './s3d/textures.js?v=13';
+import { createStoneMaterial, setStoneMap, wipeStones } from './s3d/stoneMat.js?v=13';
 
 // Açılıştaki gerçekçi 3D mutfak.
 // - Açılışta kamera cilalı taşın yüzeyine çok yakından başlar, geri çekilerek mutfağın tamamını gösterir.
@@ -15,7 +15,6 @@ const lerp = (a, b, t) => a + (b - a) * t;
 export async function createScene(canvas, { stones, mobile }) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(devicePixelRatio, mobile ? 1.75 : 2));
-  renderer.setSize(innerWidth, innerHeight, false);
   renderer.setClearColor(0xf7f2ea, 1);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -29,18 +28,33 @@ export async function createScene(canvas, { stones, mobile }) {
 
   // ---------------- kamera ve çerçeve ----------------
   // Mobilde 3D ekranın üst %60'ında çizilir; altta yazılar ve butonlar durur.
-  const K = mobile ? .6 : 1;
+  let K = mobile ? .6 : 1;
   const camera = new THREE.PerspectiveCamera(50, 1, .05, 40);
   const HF = mobile ? 54 : 52;                       // yatay görüş açısı (derece)
+  let cw = 0, ch = 0;
   const frame = () => {
-    const w = innerWidth, h = innerHeight * K;
+    const w = cw, h = ch * K;
     camera.aspect = w / h;
-    camera.fov = clamp(2 * Math.atan(Math.tan(HF * Math.PI / 360) / camera.aspect) * 180 / Math.PI, 28, 70);
+    const f = 2 * Math.atan(Math.tan(HF * Math.PI / 360) / camera.aspect) * 180 / Math.PI;
+    // kısa telefon ekranında biraz geri çekil ve görüntüyü aşağı kaydır: duvardaki tabela üst menünün altında kalmasın
+    const short = mobile ? clamp((420 - h) / 120, 0, 1) : 0;
+    camera.fov = clamp(Math.max(f, f + (58 - f) * short), 28, 70);
     // masaüstünde mutfak sağa kayar, sol taraf yazıya kalır
-    if (!mobile) camera.setViewOffset(w, h, -w * .17, 0, w, h); else camera.clearViewOffset();
+    if (!mobile) camera.setViewOffset(w, h, -w * .17, 0, w, h);
+    else if (short > 0) camera.setViewOffset(w, h, 0, -28 * short, w, h);
+    else camera.clearViewOffset();
     camera.updateProjectionMatrix();
   };
-  frame();
+  // tampon ve CSS kutusu her zaman pencerenin görünen ölçüsü (100vh ile şişmesin)
+  // mobilde 3D, taş çiplerinin hemen altına kadar çizilir (kısa ekranlarda ada çiplerin arkasında kalmasın)
+  const pickTop = h => { const pk = document.querySelector('.h3d__pick'); const r = pk && pk.getBoundingClientRect(); return r && r.height ? r.top + scrollY : h * .47; };
+  const size = () => {
+    const w = innerWidth, h = innerHeight;
+    const k = mobile ? clamp((pickTop(h) + 44) / h, .4, .62) : 1;
+    if (w === cw && h === ch && k === K) return;
+    cw = w; ch = h; K = k; renderer.setSize(w, h); frame();
+  };
+  size();
   const TARGET = new THREE.Vector3(0, .78, -.15);
   const REST = { r: mobile ? 4.55 : 4.9, pitch: .27 };
 
@@ -62,7 +76,7 @@ export async function createScene(canvas, { stones, mobile }) {
   const cache = {};
   const tex = url => cache[url] || (cache[url] = new Promise(res => loader.load(url, t => {
     t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = maxAniso; res(t);
-  }, undefined, () => res(null))));
+  }, undefined, () => { delete cache[url]; res(null); })));
   // taş dokusu gerçek ölçüde: bir doku ~1.8 m taşı temsil eder; ayna tekrarı = ortadan simetrik (book-match)
   const SLAB = 1.8;
   const fit = (base, f) => {
@@ -148,7 +162,6 @@ export async function createScene(canvas, { stones, mobile }) {
   add(box(BW, SPL - BH - BT, .02), splMat, 0, (SPL + BH + BT) / 2, BACK + .011, { cast: false });
   // panelin üstünde ışıklı pirinç raf çizgisi
   add(box(BW, .03, .2), M.brass, 0, SPL + .015, BACK + .1);
-  add(box(BW - .1, .008, .02), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffe2b0).multiplyScalar(1.6) }), 0, SPL - .006, BACK + .17, { cast: false, recv: false });
   // iki yanda boy dolaplar (iki kapak, dikey pirinç tutamak)
   [-1, 1].forEach(sg => {
     const x = sg * (BW / 2 + .62);
@@ -227,8 +240,9 @@ export async function createScene(canvas, { stones, mobile }) {
   ledStrip(W - .14, .006, .012, 0, H - T - .006, .47, island);          // ada ön çıkıntısının altı
   ledStrip(W - 2 * T - .04, .008, .01, 0, .012, .125, island);           // ada süpürgelik
   ledStrip(BW - .04, .008, .01, 0, .012, bz + BD / 2 - .035);            // arka dolap süpürgelik
-  ledStrip(BW - .1, .008, .02, 0, SPL - .006, BACK + .17);               // raf altı
-  [-1, 1].forEach(sg => ledStrip(.008, 2.6, .01, sg * (BW / 2 + .015), 1.4, bz + BD / 2 - .02));  // boy dolap kenarları
+  const shelfLed = ledStrip(BW - .1, .008, .02, 0, SPL - .006, BACK + .17);   // raf altı (gündüz de ince ışık çizgisi)
+  const SHELF_DAY = new THREE.Color(0xffe2b0).multiplyScalar(.85);
+  [-1, 1].forEach(sg => ledStrip(.006, 2.6, .01, sg * (BW / 2 + .005), 1.4, bz + BD / 2 - .005));  // boy dolap kenarları
   const pools = [];
   const poolTex = createGlowTexture({ size: 128, color: '#ffc985' });
   const pool = (w, d, x, y, z, rx = -Math.PI / 2, parent = room) => {
@@ -296,23 +310,32 @@ export async function createScene(canvas, { stones, mobile }) {
   [-.78, 0, .78].forEach(x => shadowPlane(.55, .55, x, .67, .32));
 
   // ---------------- taş giydirme ----------------
-  let curIdx = 0, dressTok = 0;
+  let curIdx = 0, dressTok = 0, shownMaps = [];
   async function dress(i, animate) {
     const tok = ++dressTok;
-    const base = await tex(stones[i]); if (!base || tok !== dressTok) return;
-    if (!animate) { stoneMats.forEach(m => setStoneMap(m, fit(base, m.userData.fit))); return; }
-    const entries = stoneMats.map(m => ({ material: m, next: fit(base, m.userData.fit) }));
-    renderer.initTexture(entries[0].next);   // GPU'ya önceden yükle: geçiş ilk karede takılmasın
-    await wipeStones(entries, { duration: 1.35, from: -4.2, to: 4.2 });
+    const base = await tex(stones[i]); if (!base || tok !== dressTok) return false;
+    const prev = shownMaps;
+    const next = stoneMats.map(m => fit(base, m.userData.fit));
+    shownMaps = next;
+    const drop = () => prev.forEach(t => { if (!stoneMats.some(m => m.map === t)) t.dispose(); });
+    if (!animate) { stoneMats.forEach((m, k) => setStoneMap(m, next[k])); drop(); return true; }
+    renderer.initTexture(next[0]);   // GPU'ya önceden yükle: geçiş ilk karede takılmasın
+    // ışıklı çizgi arka panelin sol arka köşesinden adanın sağ ön köşesine kadar ilerler
+    await wipeStones(stoneMats.map((m, k) => ({ material: m, next: next[k] })), { duration: 1.25, from: -2.45, to: 1.75 });
+    drop();
+    return true;
   }
   await dress(0, false);
-  stones.slice(1).forEach(tex);   // diğer taşları arkadan yükle
+  // diğer taşları açılış bittikten sonra arkadan yükle (ilk görüntüyle yarışmasın)
+  setTimeout(() => stones.slice(1).forEach(tex), 4500);
 
   // ---------------- etkileşim ----------------
   let yaw = 0, yawT = 0, vel = 0, gyroY = 0, gyroYT = 0, gyroP = 0, gyroPT = 0, active = true, onDrag = null;
   const YL = .62;                                   // gezinme sınırı (± radyan)
+  // kamera hiçbir durumda yan duvarların dışına çıkmasın (eğim + nefes + fare dahil)
+  const AM = Math.asin(Math.min(1, 3.05 / (REST.r * Math.cos(REST.pitch + .07))));
   const hero$ = document.querySelector('.hero');
-  const inZone = (x, y, el) => !(el && el.closest && el.closest('a,button,.h3d__pick,.h3d__toast')) && (mobile ? y < innerHeight * K * .85 : x > innerWidth * .38);
+  const inZone = (x, y, el) => !(el && el.closest && el.closest('a,button,.h3d__pick,.h3d__toast')) && (mobile ? y < ch * K * .85 : x > cw * .38);
   let lx = null, lt = 0;
   const start = (x, y, el) => { if (inZone(x, y, el)) { lx = x; lt = performance.now(); vel = 0; } };
   const move = x => {
@@ -322,16 +345,21 @@ export async function createScene(canvas, { stones, mobile }) {
     // sınırın dışına çekince lastik gibi zorlaşır
     const over = Math.max(0, Math.abs(yawT) - YL);
     yawT += d * (over > 0 && Math.sign(d) === Math.sign(yawT) ? 1 / (1 + over * 8) : 1);
+    yawT = clamp(yawT, -YL - .18, YL + .18);
     vel = d / Math.max(8, now - lt) * 16;
     lx = x; lt = now; onDrag && onDrag();
   };
-  const end = () => { lx = null; };
-  hero$.addEventListener('touchstart', e => { const t = e.touches[0]; start(t.clientX, t.clientY, e.target); askGyro(); }, { passive: true });
+  // parmak bir süre durup kaldırılırsa eski hız kullanılmasın
+  const end = () => { if (lx !== null && performance.now() - lt > 80) vel = 0; lx = null; };
+  hero$.addEventListener('touchstart', e => { const t = e.touches[0]; start(t.clientX, t.clientY, e.target); }, { passive: true });
+  // iPhone eğim izni yalnızca gerçek dokunuş (touchend/click) içinde istenebilir
+  hero$.addEventListener('touchend', () => askGyro(), { passive: true });
+  hero$.addEventListener('click', () => askGyro());
   hero$.addEventListener('touchmove', e => move(e.touches[0].clientX), { passive: true });
   addEventListener('touchend', end); addEventListener('touchcancel', end);
-  hero$.addEventListener('pointerdown', e => { if (e.pointerType !== 'touch') start(e.clientX, e.clientY, e.target); });
-  addEventListener('pointermove', e => { if (e.pointerType !== 'touch') move(e.clientX); });
-  addEventListener('pointerup', end);
+  hero$.addEventListener('pointerdown', e => { if (e.pointerType !== 'touch' && e.button === 0) start(e.clientX, e.clientY, e.target); });
+  addEventListener('pointermove', e => { if (e.pointerType === 'touch') return; if (lx !== null && !(e.buttons & 1)) { end(); return; } move(e.clientX); });
+  addEventListener('pointerup', end); addEventListener('pointercancel', end); addEventListener('blur', end);
   let mx = 0, my = 0;
   addEventListener('pointermove', e => { if (e.pointerType === 'mouse') { mx = e.clientX / innerWidth - .5; my = e.clientY / innerHeight - .5; } });
 
@@ -345,9 +373,12 @@ export async function createScene(canvas, { stones, mobile }) {
     gyroOn = true;
   }
   function askGyro() {
-    if (gyroOn || askGyro.done) return; askGyro.done = true;
     const DO = window.DeviceOrientationEvent;
-    if (DO && typeof DO.requestPermission === 'function') DO.requestPermission().then(s => { if (s === 'granted') addEventListener('deviceorientation', onOri); }).catch(() => {});
+    if (gyroOn || askGyro.done || askGyro.busy || !DO || typeof DO.requestPermission !== 'function') return;
+    askGyro.busy = true;
+    // izin kesin yanıtlanınca bir daha sorma; hata olursa sonraki dokunuşta tekrar dene
+    DO.requestPermission().then(s => { askGyro.done = true; if (s === 'granted') addEventListener('deviceorientation', onOri); })
+      .catch(() => {}).finally(() => { askGyro.busy = false; });
   }
   if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission !== 'function') addEventListener('deviceorientation', onOri);
 
@@ -361,8 +392,14 @@ export async function createScene(canvas, { stones, mobile }) {
   const macroPos = new THREE.Vector3(.95, H + .2, .35 + .62);
   const macroLook = new THREE.Vector3(.1, H, .2);
   const camPos = new THREE.Vector3(), look = new THREE.Vector3(), restPos = new THREE.Vector3();
-  let autoLit = reduced || /[?&]nointro/.test(qs), onLights = null;
+  let autoLit = reduced || /[?&]nointro/.test(qs), onLights = null, afterIntro = 0;
   if (/[?&]night/.test(qs)) { nightT = night = 1; autoLit = true; }
+
+  camera.position.copy(intro < 1 ? macroPos : restPos.set(0, TARGET.y + Math.sin(REST.pitch) * REST.r, TARGET.z + Math.cos(REST.pitch) * REST.r));
+  camera.lookAt(intro < 1 ? macroLook : TARGET);
+  try { if (renderer.compileAsync) await renderer.compileAsync(scene, camera); } catch (e) { /* derleme ilk karede yapılır */ }
+  canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); });
+  canvas.addEventListener('webglcontextrestored', () => { scene.environment = createStudioEnvironment(renderer, { intensity: 1 }); });
 
   const clock = new THREE.Clock();
   function loop() {
@@ -381,7 +418,7 @@ export async function createScene(canvas, { stones, mobile }) {
     gyroY += (gyroYT - gyroY) * .07; gyroP += (gyroPT - gyroP) * .07;
     const breathe = Math.sin(t * .23) * .025;            // durgun değil, hafif nefes alan sahne
 
-    const a = yaw + gyroY + breathe + mx * .25;
+    const a = clamp(yaw + gyroY + breathe + mx * .25, -AM, AM);
     const p = REST.pitch + gyroP + my * -.06;
     restPos.set(TARGET.x + Math.sin(a) * Math.cos(p) * REST.r, TARGET.y + Math.sin(p) * REST.r, TARGET.z + Math.cos(a) * Math.cos(p) * REST.r);
     camPos.lerpVectors(macroPos, restPos, ip);
@@ -390,7 +427,8 @@ export async function createScene(canvas, { stones, mobile }) {
     camera.lookAt(look);
 
     // açılış bittikten kısa süre sonra LED'ler bir kez kendiliğinden yanar (kullanıcı dokunmadıysa)
-    if (!userToggled && !autoLit && t > INTRO_S + 1.4) { autoLit = true; nightT = 1; onLights && onLights(true); }
+    if (intro >= 1) afterIntro += dt;
+    if (!userToggled && !autoLit && afterIntro > 1.4) { autoLit = true; nightT = 1; onLights && onLights(true); }
     night += (nightT - night) * Math.min(1, dt * 2.4);
     const n = night, ns = n * n * (3 - 2 * n);
 
@@ -409,6 +447,7 @@ export async function createScene(canvas, { stones, mobile }) {
     M.windowGlow.color.lerpColors(winDay, winNight, ns);
     const ledK = 2.4 * ns * (1 + Math.sin(t * 2.1) * .01);
     leds.forEach(m => m.material.color.copy(LED).multiplyScalar(ledK));
+    shelfLed.material.color.lerpColors(SHELF_DAY, shelfLed.material.color, ns);
     pools.forEach((m, k) => { m.material.opacity = (k === 2 ? .55 : .75) * ns; });
     ledLights[0].intensity = 1.3 * ns; ledLights[1].intensity = 1.6 * ns;
     // tabela: neon titreyerek yanar, sonra hafifçe nefes alır; gündüz sadece ince hâle + duvara gölge
@@ -426,19 +465,18 @@ export async function createScene(canvas, { stones, mobile }) {
     stoneMats.forEach(m => { const u = m.userData.u; if (u && u.uGlow) u.uGlow.value = (m.userData.glow || .08) * ns; });
     renderer.toneMappingExposure = lerp(.82, 1.0, ip) * lerp(1, 1.12, ns);
 
-    const w = innerWidth, h = innerHeight;
-    renderer.setViewport(0, h * (1 - K), w, h * K);
+    renderer.setViewport(0, ch * (1 - K), cw, ch * K);
     renderer.render(scene, camera);
   }
   loop();
 
-  addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight, false); frame(); });
+  addEventListener('resize', size);
 
   return {
     setProgress() {},
     setLabels() {},
-    setActive(v) { active = v; },
-    nudge(dy) { vel += clamp(dy * -.00035, -.012, .012); },
+    setActive(v) { if (v && !active) { vel = 0; clock.getDelta(); } active = v; },
+    nudge(dy) { if (active) vel += clamp(dy * -.00035, -.012, .012); },
     onDrag(fn) { onDrag = fn; },
     // LED ışıkları: açık/kapalı (aç-kapa animasyonlu). Dönen değer: yeni durum
     setLights(on) { userToggled = true; nightT = on ? 1 : 0; return !!on; },
@@ -447,9 +485,11 @@ export async function createScene(canvas, { stones, mobile }) {
     async setStone(url) {
       let i = stones.indexOf(url);
       if (i < 0) { stones.push(url); i = stones.length - 1; }
-      if (i === curIdx) return;
-      curIdx = i;
-      await dress(i, !reduced);
+      if (i === curIdx) return true;
+      const prev = curIdx; curIdx = i;
+      const ok = await dress(i, !reduced);
+      if (!ok && curIdx === i) curIdx = prev;
+      return ok;
     },
   };
 }
